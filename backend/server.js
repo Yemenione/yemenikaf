@@ -44,7 +44,7 @@ const authenticateToken = (req, res, next) => {
 const PDFDocument = require('pdfkit');
 
 // --- INVOICE PDF GENERATION ---
-app.get('/api/invoices/:id/pdf', async (req, res) => {
+app.get('/api/invoices/:id/pdf', authenticateToken, async (req, res) => {
     const { id } = req.params;
     try {
         const invoice = await prisma.invoices.findUnique({
@@ -61,63 +61,103 @@ app.get('/api/invoices/:id/pdf', async (req, res) => {
 
         if (!invoice) return res.status(404).json({ error: "Invoice not found" });
 
-        const doc = new PDFDocument({ margin: 50 });
+        // Security Check: Verify user owns this invoice (unless admin)
+        if (req.user.type !== 'admin' && invoice.orders.customer_id !== req.user.id) {
+            return res.status(403).json({ error: "Unauthorized access to this invoice" });
+        }
+
+        const doc = new PDFDocument({
+            margin: 50,
+            size: 'A4'
+        });
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoice_number}.pdf`);
 
         doc.pipe(res);
 
-        // Header
-        doc.fontSize(20).text('Yemeni Market', { align: 'center' });
-        doc.fontSize(12).text('Invoice', { align: 'center' });
-        doc.moveDown();
+        // Professional Header
+        const goldColor = '#D4AF37';
+        const coffeeColor = '#2C1E14';
 
-        // Details
-        doc.fontSize(10);
-        doc.text(`Invoice Number: ${invoice.invoice_number}`, { align: 'right' });
-        doc.text(`Date: ${new Date(invoice.issued_at).toLocaleDateString()}`, { align: 'right' });
-        doc.text(`Status: ${invoice.status}`, { align: 'right' });
-        doc.moveDown();
+        doc.rect(0, 0, 600, 150).fill(coffeeColor);
 
-        doc.text(`Billed To:`, { underline: true });
+        doc.fillColor(goldColor).fontSize(24).font('Helvetica-Bold').text('YEMENI', 50, 45, { continued: true });
+        doc.fillColor('#FFFFFF').text('.MARKET');
+
+        doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica').text('AUTHENTICITY & HERITAGE', 50, 75);
+
+        doc.fillColor('#FFFFFF').fontSize(10).font('Helvetica-Bold').text('INVOICE', 450, 45, { align: 'right' });
+        doc.fontSize(16).text(`#${invoice.invoice_number}`, 450, 65, { align: 'right' });
+
+        doc.fillColor(coffeeColor).font('Helvetica');
+        doc.moveDown(8);
+
+        // Info Columns
+        const buyerX = 50;
+        const infoX = 350;
+        const currentY = doc.y;
+
+        doc.fontSize(12).font('Helvetica-Bold').text('Billed To:', buyerX, currentY);
+        doc.fontSize(10).font('Helvetica').moveDown(0.5);
         if (invoice.orders.customers) {
             doc.text(`${invoice.orders.customers.first_name || ''} ${invoice.orders.customers.last_name || ''}`);
             doc.text(invoice.orders.customers.email);
+            if (invoice.orders.shipping_address) {
+                doc.text(invoice.orders.shipping_address, { width: 200 });
+            }
         } else {
             doc.text("Guest Customer");
+            if (invoice.orders.shipping_address) {
+                doc.text(invoice.orders.shipping_address, { width: 200 });
+            }
         }
 
-        // Items Table Header
-        doc.moveDown();
-        const tableTop = 250;
-        doc.font('Helvetica-Bold');
-        doc.text("Item", 50, tableTop);
-        doc.text("Quantity", 300, tableTop, { width: 90, align: 'right' });
-        doc.text("Total", 400, tableTop, { width: 90, align: 'right' });
+        doc.fontSize(12).font('Helvetica-Bold').text('Invoice Details:', infoX, currentY);
+        doc.fontSize(10).font('Helvetica').moveDown(0.5);
+        doc.text(`Order Number: ${invoice.orders.order_number}`, infoX);
+        doc.text(`Issued Date: ${new Date(invoice.issued_at).toLocaleDateString()}`, infoX);
+        doc.text(`Payment Status: ${invoice.status}`, infoX);
 
-        doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+        doc.moveDown(4);
+
+        // Table Header
+        const tableTop = doc.y;
+        doc.rect(50, tableTop, 500, 20).fill(coffeeColor);
+        doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(10);
+        doc.text("Item Description", 60, tableTop + 6);
+        doc.text("Qty", 350, tableTop + 6, { width: 50, align: 'center' });
+        doc.text("Price", 400, tableTop + 6, { width: 70, align: 'right' });
+        doc.text("Total", 480, tableTop + 6, { width: 60, align: 'right' });
 
         // Items
-        let y = tableTop + 25;
-        doc.font('Helvetica');
+        let itemY = tableTop + 25;
+        doc.fillColor(coffeeColor).font('Helvetica');
 
-        invoice.orders.order_items.forEach(item => {
-            doc.text(item.product_name || "Product", 50, y);
-            doc.text(item.quantity, 300, y, { width: 90, align: 'right' });
-            doc.text(`$${Number(item.total_price).toFixed(2)}`, 400, y, { width: 90, align: 'right' });
-            y += 20;
+        invoice.orders.order_items.forEach((item, index) => {
+            if (index % 2 === 0) {
+                doc.rect(50, itemY - 5, 500, 20).fill('#F9F7F5');
+                doc.fillColor(coffeeColor);
+            }
+
+            doc.text(item.product_name || "Product", 60, itemY);
+            doc.text(item.quantity.toString(), 350, itemY, { width: 50, align: 'center' });
+            doc.text(`$${Number(item.price || 0).toFixed(2)}`, 400, itemY, { width: 70, align: 'right' });
+            doc.text(`$${Number(item.total_price).toFixed(2)}`, 480, itemY, { width: 60, align: 'right' });
+            itemY += 20;
         });
 
-        doc.moveTo(50, y + 10).lineTo(550, y + 10).stroke();
+        doc.moveTo(50, itemY).lineTo(550, itemY).strokeColor('#EEEEEE').stroke();
 
-        // Total
-        y += 20;
-        doc.font('Helvetica-Bold');
-        doc.text(`Total Paid: $${Number(invoice.amount).toFixed(2)}`, 400, y, { width: 90, align: 'right' });
+        // Footer Summary
+        itemY += 20;
+        doc.font('Helvetica-Bold').fontSize(12);
+        doc.text('Total Amount', 350, itemY);
+        doc.fillColor(goldColor).text(`$${Number(invoice.amount).toFixed(2)}`, 450, itemY, { align: 'right', width: 90 });
 
-        doc.fontSize(10).text("Thank you for your business!", 50, 700, { align: 'center', width: 500 });
-
+        // Bottom Footer
+        doc.fillColor('#AAAAAA').fontSize(8).font('Helvetica').text('Thank you for choosing Yemeni Market. We appreciate your purchase of our authentic heritage products.', 50, 750, { align: 'center', width: 500 });
+        doc.text('© 2026 Yemeni Market - Heritage & Excellence', 50, 765, { align: 'center', width: 500 });
 
         doc.end();
 
@@ -740,13 +780,10 @@ app.post('/api/create-payment-intent', async (req, res) => {
     try {
         const { items } = req.body;
 
-        // Mock mode if Stripe key is not configured or is a placeholder
-        const secretKey = config.stripe_secret_key || '';
-        if (!secretKey || secretKey.toLowerCase().includes('placeholder')) {
-            return res.send({
-                clientSecret: 'mock_secret_' + Date.now(),
-                mock: true
-            });
+        // Use Stripe secret key from DB directly
+        const secretKey = config.stripe_secret_key;
+        if (!secretKey) {
+            return res.status(400).json({ error: "Stripe is not configured on this server." });
         }
 
         const stripe = require('stripe')(secretKey);
@@ -1063,13 +1100,10 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // --- CUSTOMER ADDRESSES ---
-app.get('/api/customer/address', async (req, res) => {
+app.get('/api/customer/address', authenticateToken, async (req, res) => {
     try {
-        const { user_id } = req.query;
-        if (!user_id) return res.status(400).json({ error: "User ID required" });
-
         const addresses = await prisma.addresses.findMany({
-            where: { customer_id: parseInt(user_id) },
+            where: { customer_id: req.user.id },
             orderBy: { is_default: 'desc' }
         });
         res.json(addresses);
@@ -1078,17 +1112,16 @@ app.get('/api/customer/address', async (req, res) => {
     }
 });
 
-app.post('/api/customer/address', async (req, res) => {
+app.post('/api/customer/address', authenticateToken, async (req, res) => {
     try {
-        const { user_id, label, street_address, city, postal_code, country, phone } = req.body;
-        if (!user_id || !street_address || !city) {
+        const { label, street_address, city, postal_code, country, phone } = req.body;
+        if (!street_address || !city) {
             return res.status(400).json({ error: "Required fields missing" });
         }
 
-        // If making this default, unset others? (Skipping for simplicity, just create)
         const newAddress = await prisma.addresses.create({
             data: {
-                customer_id: parseInt(user_id),
+                customer_id: req.user.id,
                 label: label || 'Home',
                 street_address,
                 city,
@@ -1106,18 +1139,12 @@ app.post('/api/customer/address', async (req, res) => {
 });
 
 // --- CUSTOMER INVOICES ---
-app.get('/api/customer/invoices', async (req, res) => {
+app.get('/api/customer/invoices', authenticateToken, async (req, res) => {
     try {
-        const { user_id } = req.query;
-        if (!user_id) return res.status(400).json({ error: "User ID required" });
-
-        // Retrieve invoices linked to user's orders
-        // Use Prisma's relation capabilities if set up, or just manual logic
-        // Since invoice -> order -> customer, we can find invoices where orders.customer_id = user_id
         const invoices = await prisma.invoices.findMany({
             where: {
                 orders: {
-                    customer_id: parseInt(user_id)
+                    customer_id: req.user.id
                 }
             },
             include: {
@@ -1138,15 +1165,10 @@ app.get('/api/customer/invoices', async (req, res) => {
 // ... (Logic added inside POST /api/orders, see below)
 
 // --- GET USER ORDERS ---
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', authenticateToken, async (req, res) => {
     try {
-        const { user_id } = req.query;
-        if (!user_id) {
-            return res.status(400).json({ error: "User ID required" });
-        }
-
         const orders = await prisma.orders.findMany({
-            where: { customer_id: parseInt(user_id) },
+            where: { customer_id: req.user.id },
             include: {
                 order_items: true
             },

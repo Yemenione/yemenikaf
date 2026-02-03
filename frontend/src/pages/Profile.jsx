@@ -31,9 +31,12 @@ const Profile = () => {
 
     useEffect(() => {
         if (user && user.id) {
+            const token = localStorage.getItem('token');
+            const headers = { 'Authorization': `Bearer ${token}` };
+
             const fetchOrders = async () => {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/orders?user_id=${user.id}`);
+                    const response = await fetch(`http://localhost:5000/api/orders`, { headers });
                     if (response.ok) {
                         const data = await response.json();
                         const mappedOrders = data.map(order => ({
@@ -49,13 +52,13 @@ const Profile = () => {
             };
             const fetchAddresses = async () => {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/customer/address?user_id=${user.id}`);
+                    const response = await fetch(`http://localhost:5000/api/customer/address`, { headers });
                     if (response.ok) setAddresses(await response.json());
                 } catch (error) { console.error(error); }
             };
             const fetchInvoices = async () => {
                 try {
-                    const response = await fetch(`http://localhost:5000/api/customer/invoices?user_id=${user.id}`);
+                    const response = await fetch(`http://localhost:5000/api/customer/invoices`, { headers });
                     if (response.ok) setInvoices(await response.json());
                 } catch (error) { console.error(error); }
             };
@@ -69,10 +72,14 @@ const Profile = () => {
     const handleAddAddress = async (e) => {
         e.preventDefault();
         try {
+            const token = localStorage.getItem('token');
             const res = await fetch('http://localhost:5000/api/customer/address', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...newAddress, user_id: user.id })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(newAddress)
             });
             if (res.ok) {
                 setShowAddressForm(false);
@@ -99,6 +106,28 @@ const Profile = () => {
             </div>
         );
     }
+
+    const downloadInvoice = async (invoice) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`http://localhost:5000/api/invoices/${invoice.id}/pdf`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Download failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `invoice-${invoice.invoice_number}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("PDF Error:", error);
+            alert("Failed to download invoice");
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#F9F7F5]">
@@ -234,7 +263,7 @@ const Profile = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-serif font-bold text-xl text-coffee-dark mb-2">${Number(inv.amount).toFixed(2)}</p>
-                                                <Button size="sm" variant="outline" className="border-gold text-gold hover:bg-gold hover:text-white" onClick={() => window.open(`http://localhost:5000/api/invoices/${inv.id}/pdf`, '_blank')}>
+                                                <Button size="sm" variant="outline" className="border-gold text-gold hover:bg-gold hover:text-white" onClick={() => downloadInvoice(inv)}>
                                                     {t('download_pdf')}
                                                 </Button>
                                             </div>
