@@ -24,18 +24,18 @@ model activity_logs {
 model addresses {
   id             Int       @id @default(autoincrement())
   customer_id    Int
-  label          String?
-  is_default     Boolean   @default(false)
+  label          String?   @db.VarChar(50)
   street_address String    @db.Text
-  city           String
-  state          String?
-  country        String
-  postal_code    String?
-  phone          String?
-  created_at     DateTime  @default(now())
-  customers      customers @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  city           String    @db.VarChar(100)
+  state          String?   @db.VarChar(100)
+  country        String    @db.VarChar(100)
+  postal_code    String?   @db.VarChar(20)
+  phone          String?   @db.VarChar(50)
+  is_default     Boolean?  @default(false)
+  created_at     DateTime? @default(now()) @db.Timestamp(0)
+  customers      customers @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "addresses_ibfk_1")
 
-  @@index([customer_id], map: "addresses_customer_id_fkey")
+  @@index([customer_id], map: "customer_id")
 }
 
 model admins {
@@ -53,12 +53,12 @@ model admins {
 }
 
 model app_configs {
-  id          Int      @id @default(autoincrement())
-  key         String   @unique
-  value       String   @db.Text
-  description String?
-  updated_at  DateTime @default(now())
-  created_at  DateTime @default(now())
+  id          Int       @id @default(autoincrement())
+  key         String?   @unique(map: "key") @db.VarChar(255)
+  value       String?   @db.Text
+  description String?   @db.Text
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  updated_at  DateTime? @default(now()) @db.Timestamp(0)
 }
 
 model attribute_values {
@@ -103,15 +103,14 @@ model blog_posts {
 }
 
 model brands {
-  id          Int        @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
-  slug        String     @unique
+  slug        String   @unique
   logo        String?
-  description String?    @db.Text
-  is_active   Boolean    @default(true)
-  created_at  DateTime   @default(now())
+  description String?  @db.Text
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
   updated_at  DateTime
-  products    products[]
 }
 
 model carriers {
@@ -165,24 +164,20 @@ model cart_rules {
 }
 
 model Category {
-  id               Int          @id @default(autoincrement())
-  name             String
-  slug             String       @unique
-  description      String?      @db.Text
-  imageUrl         String?      @map("image_url")
-  isActive         Boolean      @default(true) @map("is_active")
-  displayOrder     Int          @default(0) @map("display_order")
-  createdAt        DateTime     @default(now()) @map("created_at")
-  metaDescription  String?      @map("meta_description")
-  metaTitle        String?      @map("meta_title")
-  parentId         Int?         @map("parent_id")
-  translations     String?      @db.LongText
-  parent           Category?    @relation("categoriesTocategories", fields: [parentId], references: [id])
-  children         Category[]   @relation("categoriesTocategories")
-  products         products[]
+  id           Int        @id @default(autoincrement())
+  name         String     @db.VarChar(255)
+  slug         String?    @unique(map: "slug") @db.VarChar(255)
+  description  String?    @db.Text
+  imageUrl     String?    @map("image_url") @db.VarChar(255)
+  parentId     Int?       @map("parent_id")
+  isActive     Boolean?   @default(true) @map("is_active")
+  displayOrder Int?       @default(0) @map("display_order")
+  createdAt    DateTime?  @default(now()) @map("created_at") @db.Timestamp(0)
+  parent       Category?  @relation("categoriesTocategories", fields: [parentId], references: [id], onUpdate: Restrict, map: "categories_ibfk_1")
+  children     Category[] @relation("categoriesTocategories")
+  products     products[]
 
-  @@index([isActive, displayOrder])
-  @@index([parentId], map: "categories_parent_id_fkey")
+  @@index([parentId], map: "parent_id")
   @@map("categories")
 }
 
@@ -237,38 +232,31 @@ model currencies {
 }
 
 model customer_groups {
-  id           Int         @id @default(autoincrement())
-  name         String      @unique
-  discount_pct Decimal     @default(0.00) @db.Decimal(5, 2)
+  id           Int      @id @default(autoincrement())
+  name         String   @unique
+  discount_pct Decimal  @default(0.00) @db.Decimal(5, 2)
   color        String?
-  created_at   DateTime    @default(now())
+  created_at   DateTime @default(now())
   updated_at   DateTime
-  customers    customers[]
 }
 
 model customers {
-  id                Int              @id @default(autoincrement())
-  first_name        String?
-  last_name         String?
-  email             String           @unique
-  password_hash     String?
-  phone             String?
-  created_at        DateTime         @default(now())
-  customer_group_id Int?
-  avatar            String?
-  firebase_uid      String?
-  loyalty_points    Int              @default(0)
-  newsletter        Boolean          @default(true)
-  addresses         addresses[]
-  cart_items        cart_items[]
-  customer_groups   customer_groups? @relation(fields: [customer_group_id], references: [id])
-  orders            orders[]
-  reviews           reviews[]
-  rmas              rmas[]
-  tickets           tickets[]
-  wishlists         wishlists[]
-
-  @@index([customer_group_id], map: "customers_customer_group_id_fkey")
+  id            Int             @id @default(autoincrement())
+  first_name    String?         @db.VarChar(255)
+  last_name     String?         @db.VarChar(255)
+  email         String          @unique(map: "email") @db.VarChar(255)
+  password_hash String?         @db.VarChar(255)
+  phone         String?         @db.VarChar(50)
+  avatar        String?         @db.VarChar(255)
+  role          customers_role? @default(customer)
+  is_active     Boolean?        @default(true)
+  created_at    DateTime?       @default(now()) @db.Timestamp(0)
+  addresses     addresses[]
+  cart_items    cart_items[]
+  orders        orders[]
+  reviews       reviews[]
+  rmas          rmas[]
+  tickets       tickets[]
 }
 
 model invoices {
@@ -334,20 +322,17 @@ model order_items {
   order_id         Int
   product_id       Int?
   variant_id       Int?
-  product_slug     String?
-  product_title    String?
-  image_url        String?           @db.Text
-  sku              String?
+  product_name     String?           @db.VarChar(255)
   quantity         Int
   price            Decimal           @db.Decimal(10, 2)
   total_price      Decimal           @db.Decimal(10, 2)
-  orders           orders            @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  products         products?         @relation(fields: [product_id], references: [id])
-  product_variants product_variants? @relation(fields: [variant_id], references: [id])
+  orders           orders            @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "order_items_ibfk_1")
+  products         products?         @relation(fields: [product_id], references: [id], onUpdate: Restrict, map: "order_items_ibfk_2")
+  product_variants product_variants? @relation(fields: [variant_id], references: [id], onUpdate: Restrict, map: "order_items_ibfk_3")
 
-  @@index([order_id], map: "order_items_order_id_fkey")
-  @@index([product_id], map: "order_items_product_id_fkey")
-  @@index([variant_id], map: "order_items_variant_id_fkey")
+  @@index([order_id], map: "order_id")
+  @@index([product_id], map: "product_id")
+  @@index([variant_id], map: "variant_id")
 }
 
 model order_status_history {
@@ -364,31 +349,25 @@ model order_status_history {
 
 model orders {
   id                   Int                    @id @default(autoincrement())
+  order_number         String                 @unique(map: "order_number") @db.VarChar(50)
   customer_id          Int?
-  order_number         String                 @unique
-  status               String                 @default("Processing")
+  status               String?                @default("Processing") @db.VarChar(50)
   total_amount         Decimal                @db.Decimal(10, 2)
-  subtotal             Decimal                @default(0.00) @db.Decimal(10, 2)
-  tax_total            Decimal                @default(0.00) @db.Decimal(10, 2)
-  discount_total       Decimal                @default(0.00) @db.Decimal(10, 2)
-  shipping_cost        Decimal                @default(0.00) @db.Decimal(10, 2)
-  shipping_method      String?
-  shipping_address     String?                @db.LongText
-  billing_address      String?                @db.LongText
-  payment_method       String?
-  created_at           DateTime               @default(now())
-  updated_at           DateTime
-  tracking_number      String?
-  carrier_data         String?                @db.LongText
+  subtotal             Decimal                @db.Decimal(10, 2)
+  tax_total            Decimal?               @default(0.00) @db.Decimal(10, 2)
+  shipping_cost        Decimal?               @default(0.00) @db.Decimal(10, 2)
+  shipping_address     String?                @db.Text
+  payment_method       String?                @db.VarChar(50)
+  created_at           DateTime?              @default(now()) @db.Timestamp(0)
   invoices             invoices[]
   order_items          order_items[]
   order_status_history order_status_history[]
-  customers            customers?             @relation(fields: [customer_id], references: [id])
+  customers            customers?             @relation(fields: [customer_id], references: [id], onUpdate: Restrict, map: "orders_ibfk_1")
   rmas                 rmas?
   tickets              tickets[]
   transactions         transactions[]
 
-  @@index([customer_id], map: "orders_customer_id_fkey")
+  @@index([customer_id], map: "customer_id")
 }
 
 model product_variant_values {
@@ -405,99 +384,62 @@ model product_variant_values {
 model product_variants {
   id                     Int                      @id @default(autoincrement())
   product_id             Int
-  name                   String
-  sku                    String                   @unique
+  name                   String?                  @db.VarChar(255)
+  sku                    String?                  @unique(map: "sku") @db.VarChar(100)
   price                  Decimal                  @db.Decimal(10, 2)
-  stock                  Int                      @default(0)
+  stock                  Int?                     @default(0)
   weight                 Decimal?                 @db.Decimal(10, 3)
-  is_active              Boolean                  @default(true)
-  isbn                   String?
-  ean13                  String?
-  upc                    String?
-  compare_at_price       Decimal?                 @db.Decimal(10, 2)
-  images                 String?                  @db.Text
+  is_active              Boolean?                 @default(true)
   order_items            order_items[]
   product_variant_values product_variant_values[]
-  products               products                 @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  products               products                 @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "product_variants_ibfk_1")
   stock_movements        stock_movements[]
 
-  @@index([product_id], map: "product_variants_product_id_fkey")
+  @@index([product_id], map: "product_id")
 }
 
-
-
-// REVISING SCHEMA TO BE CLEAN:
-// I will keep the lowercase models as they align with the DB style.
-// Removing the 'Product' model block and 'ProductVariant' block I added above, and ensuring 'products' model is complete.
-
 model products {
-  id              Int               @id @default(autoincrement())
-  category_id     Int?
-  name            String
-  slug            String            @unique
-  sku             String?           @unique
-  description     String?           @db.Text
-  price           Decimal           @db.Decimal(10, 2)
-  stock_quantity  Int               @default(0)
-  weight          Decimal?          @default(0.500) @db.Decimal(10, 3)
-  images          String?           @db.Text
-  is_active       Boolean           @default(true)
-  is_featured     Boolean           @default(false)
-  brand_id        Int?
-  supplier_id     Int?
-  width           Decimal?          @db.Decimal(10, 2)
-  height          Decimal?          @db.Decimal(10, 2)
-  depth           Decimal?          @db.Decimal(10, 2)
-  reference       String?           @unique
-  ean13           String?
-  upc             String?
-  ecotax          Decimal?          @default(0.000000) @db.Decimal(10, 6)
-  created_at      DateTime          @default(now())
-  updated_at      DateTime          @updatedAt
-  cost_price      Decimal?          @db.Decimal(10, 2)
-  meta_description String?
-  meta_title      String?
-  related_ids     String?           @db.Text
-  hs_code         String?
-  origin_country  String?
-  compare_at_price Decimal?         @db.Decimal(10, 2)
-  tax_rule_id     Int?
-  translations    String?           @db.LongText
-
-  cart_items      cart_items[]
-  order_items     order_items[]
+  id               Int                @id @default(autoincrement())
+  category_id      Int?
+  name             String             @db.VarChar(255)
+  slug             String?            @unique(map: "slug") @db.VarChar(255)
+  sku              String?            @unique(map: "sku") @db.VarChar(100)
+  description      String?            @db.Text
+  price            Decimal            @db.Decimal(10, 2)
+  compare_at_price Decimal?           @db.Decimal(10, 2)
+  cost_price       Decimal?           @db.Decimal(10, 2)
+  stock_quantity   Int?               @default(0)
+  images           String?            @db.Text
+  is_active        Boolean?           @default(true)
+  is_featured      Boolean?           @default(false)
+  brand_id         Int?
+  weight           Decimal?           @db.Decimal(10, 3)
+  translations     String?            @db.LongText
+  created_at       DateTime?          @default(now()) @db.Timestamp(0)
+  cart_items       cart_items[]
+  order_items      order_items[]
   product_variants product_variants[]
-  brands          brands?           @relation(fields: [brand_id], references: [id])
-  categories      Category?         @relation(fields: [category_id], references: [id])
-  suppliers       suppliers?        @relation(fields: [supplier_id], references: [id])
-  tax_rules       tax_rules?        @relation(fields: [tax_rule_id], references: [id])
-  reviews         reviews[]
-  stock_movements stock_movements[]
-  wishlists       wishlists[]
-  carriers        carriers[]        @relation("CarrierToProduct")
+  categories       Category?          @relation(fields: [category_id], references: [id], onUpdate: Restrict, map: "products_ibfk_1")
+  reviews          reviews[]
+  stock_movements  stock_movements[]
+  carriers         carriers[]         @relation("CarrierToProduct")
 
-  @@index([brand_id], map: "products_brand_id_fkey")
-  @@index([category_id], map: "products_category_id_fkey")
-  @@index([is_active, is_featured, created_at])
-  @@index([supplier_id], map: "products_supplier_id_fkey")
-  @@index([tax_rule_id], map: "products_tax_rule_id_fkey")
+  @@index([category_id], map: "category_id")
 }
 
 model reviews {
   id          Int       @id @default(autoincrement())
-  rating      Int       @default(5)
-  comment     String?   @db.Text
-  is_verified Boolean   @default(false)
-  is_active   Boolean   @default(true)
-  created_at  DateTime  @default(now())
   customer_id Int
   product_id  Int
-  images      String?   @db.Text
-  customers   customers @relation(fields: [customer_id], references: [id])
-  products    products  @relation(fields: [product_id], references: [id])
+  rating      Int?
+  comment     String?   @db.Text
+  is_verified Boolean?  @default(false)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  customers   customers @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "reviews_ibfk_1")
+  products    products  @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "reviews_ibfk_2")
 
-  @@index([customer_id])
-  @@index([product_id])
+  @@index([customer_id], map: "customer_id")
+  @@index([product_id], map: "product_id")
 }
 
 model rmas {
@@ -555,35 +497,33 @@ model stock_movements {
 }
 
 model store_config {
-  key         String   @id
-  value       String   @db.Text
-  type        String   @default("text")
-  group       String   @default("general")
-  description String?
-  isPublic    Boolean  @default(false)
-  updated_at  DateTime
+  key         String    @id @db.VarChar(255)
+  value       String?   @db.Text
+  type        String?   @default("text") @db.VarChar(50)
+  group       String?   @default("general") @db.VarChar(50)
+  description String?   @db.Text
+  isPublic    Boolean?  @default(false)
+  updated_at  DateTime? @default(now()) @db.Timestamp(0)
 }
 
 model suppliers {
-  id           Int        @id @default(autoincrement())
+  id           Int      @id @default(autoincrement())
   name         String
-  contact_info String?    @db.Text
-  is_active    Boolean    @default(true)
-  created_at   DateTime   @default(now())
+  contact_info String?  @db.Text
+  is_active    Boolean  @default(true)
+  created_at   DateTime @default(now())
   updated_at   DateTime
-  products     products[]
 }
 
 model tax_rules {
-  id         Int        @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   name       String
-  rate       Decimal    @db.Decimal(10, 4)
+  rate       Decimal  @db.Decimal(10, 4)
   country    String
-  priority   Int        @default(0)
-  is_active  Boolean    @default(true)
-  created_at DateTime   @default(now())
+  priority   Int      @default(0)
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
   updated_at DateTime
-  products   products[]
 }
 
 model ticket_messages {
@@ -642,18 +582,6 @@ model translations {
   @@unique([group, key, language])
 }
 
-model wishlists {
-  id          Int       @id @default(autoincrement())
-  customer_id Int
-  product_id  Int
-  created_at  DateTime  @default(now())
-  customers   customers @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  products    products  @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  @@unique([customer_id, product_id])
-  @@index([product_id], map: "wishlists_product_id_fkey")
-}
-
 enum invoices_status {
   DRAFT
   ISSUED
@@ -686,4 +614,9 @@ enum blog_posts_status {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum customers_role {
+  customer
+  admin
 }

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import ProductGrid from '../components/ProductGrid';
-import { ArrowRight, Star, ShieldCheck, Truck } from 'lucide-react';
+import { ArrowRight, Star, ShieldCheck, Truck, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import Hero3D from '../components/Three/Hero3D'; // Import 3D Hero
@@ -26,7 +26,7 @@ const Home = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 h-auto lg:h-[600px]">
                         {/* Big Item 1 (Honey) */}
                         <div className="lg:col-span-6 relative group overflow-hidden cursor-pointer h-[400px] lg:h-full">
-                            <img src="https://placehold.co/900x900/D4AF37/FFFFFF?text=Royal+Sidr+Experience" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Sidr Honey" />
+                            <img src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Sidr Honey" />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                             <div className="absolute bottom-8 left-8 text-white">
                                 <h3 className="text-3xl font-serif font-bold mb-2">Sidr Honey</h3>
@@ -37,7 +37,7 @@ const Home = () => {
                         {/* Top Right (Coffee) */}
                         <div className="lg:col-span-6 lg:row-span-1 grid grid-cols-2 gap-4 h-full">
                             <div className="col-span-2 relative group overflow-hidden cursor-pointer h-[300px] lg:h-full">
-                                <img src="https://placehold.co/900x450/4B3621/FFFFFF?text=Haraz+Coffee+Beans" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Coffee" />
+                                <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Coffee" />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                                 <div className="absolute bottom-6 left-6 text-white">
                                     <h3 className="text-2xl font-serif font-bold mb-1">Mountain Coffee</h3>
@@ -55,7 +55,7 @@ const Home = () => {
                     {/* Secondary Grid Row for Spices/Gifts */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 h-[300px]">
                         <div className="relative group overflow-hidden cursor-pointer">
-                            <img src="https://placehold.co/800x400/800000/FFFFFF?text=Luxury+Gifts" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Gifts" />
+                            <img src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Gifts" />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                             <div className="absolute bottom-6 left-6 text-white">
                                 <h3 className="text-2xl font-serif font-bold mb-1">Gift Sets</h3>
@@ -63,7 +63,7 @@ const Home = () => {
                             </div>
                         </div>
                         <div className="relative group overflow-hidden cursor-pointer">
-                            <img src="https://placehold.co/800x400/E85D04/FFFFFF?text=Rare+Spices" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Spices" />
+                            <img src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Spices" />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                             <div className="absolute bottom-6 left-6 text-white">
                                 <h3 className="text-2xl font-serif font-bold mb-1">Rare Spices</h3>
