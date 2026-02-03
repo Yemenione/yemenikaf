@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Star, Check, ArrowLeft, Truck, ShieldCheck, RefreshCw, Minus, Plus } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useCart } from '../context/CartContext';
+import Skeleton from '../components/ui/skeleton';
 
 // Tabs Component for Details/Reviews
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,6 +21,42 @@ const ProductDetails = () => {
     const [loading, setLoading] = useState(true);
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState(null);
+    const [reviews, setReviews] = useState([]);
+    const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+    const [submitting, setSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const response = await axios.get(`http://localhost:5000/api/products/${id}/reviews`);
+                setReviews(response.data);
+            } catch (err) {
+                console.error("Error fetching reviews", err);
+            }
+        };
+        fetchReviews();
+    }, [id]);
+
+    const handleReviewSubmit = async () => {
+        if (!newReview.comment) return alert(t('please_add_comment'));
+        setSubmitting(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.post(`http://localhost:5000/api/products/${id}/reviews`, newReview, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setNewReview({ rating: 5, comment: '' });
+            alert(t('review_submitted'));
+            // Refresh reviews
+            const response = await axios.get(`http://localhost:5000/api/products/${id}/reviews`);
+            setReviews(response.data);
+        } catch (err) {
+            console.error("Error submitting review", err);
+            alert(t('failed_submit'));
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -61,8 +98,34 @@ const ProductDetails = () => {
         // Maybe show a toast notification here
     };
 
-    if (loading) return <div className="h-screen flex items-center justify-center text-gold font-serif text-xl animate-pulse">Loading Luxury...</div>;
-    if (!product) return <div className="h-screen flex items-center justify-center text-red-500">Product Not Found</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-white">
+                <Navbar />
+                <div className="container mx-auto px-4 pt-32 pb-20">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+                        <Skeleton className="aspect-[4/5] w-full rounded-lg" />
+                        <div className="space-y-6">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-12 w-3/4" />
+                            <Skeleton className="h-8 w-1/4" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-2/3" />
+                            </div>
+                            <Skeleton className="h-20 w-full" />
+                            <div className="flex gap-4">
+                                <Skeleton className="h-14 w-1/4" />
+                                <Skeleton className="h-14 flex-1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    if (!product) return <div className="h-screen flex items-center justify-center text-red-500">{t('product_not_found')}</div>;
 
     const currentPrice = selectedVariant ? selectedVariant.price : product.price;
 
@@ -74,7 +137,7 @@ const ProductDetails = () => {
             <div className="container mx-auto px-4 py-6">
                 <button onClick={() => navigate(-1)} className="flex items-center text-gray-400 hover:text-gold transition-colors text-sm uppercase tracking-widest">
                     <ArrowLeft className={`w-4 h-4 ${i18n.language === 'ar' ? 'ml-2 rotate-180' : 'mr-2'}`} />
-                    Back to Shop
+                    {t('back_to_shop')}
                 </button>
             </div>
 
@@ -102,13 +165,23 @@ const ProductDetails = () => {
                     {/* Right: Product Info */}
                     <div className="lg:w-2/5 flex flex-col pt-4">
                         <div className="border-b border-gray-100 pb-6 mb-8">
-                            <h2 className="text-sm text-gold uppercase tracking-[0.2em] mb-2 font-medium">Single Origin</h2>
-                            <h1 className="text-4xl lg:text-5xl font-serif font-bold text-coffee-dark mb-4 leading-tight">{product.name}</h1>
+                            <h2 className="text-sm text-gold uppercase tracking-[0.2em] mb-2 font-medium">{t('single_origin')}</h2>
+                            <h1 className="text-4xl lg:text-5xl font-serif font-bold text-coffee-dark mb-4 leading-tight">
+                                {i18n.language === 'ar' ? (product.name_ar || product.name) : (i18n.language === 'fr' ? (product.name_fr || product.name) : product.name)}
+                            </h1>
                             <div className="flex items-center gap-4 mb-6">
-                                <span className="text-2xl font-light text-coffee-dark">${currentPrice}</span>
+                                <span className="text-2xl font-light text-coffee-dark">{t('price_with_currency', { amount: currentPrice })}</span>
                                 <div className="flex items-center text-gold">
-                                    {[1, 2, 3, 4, 5].map(i => <Star key={i} size={14} fill="currentColor" />)}
-                                    <span className="text-gray-400 text-xs ml-2 tracking-wide">(24 Reviews)</span>
+                                    {[1, 2, 3, 4, 5].map(i => (
+                                        <Star
+                                            key={i}
+                                            size={14}
+                                            fill={i <= Math.round(reviews.reduce((acc, r) => acc + r.rating, 0) / (reviews.length || 1)) ? "currentColor" : "none"}
+                                        />
+                                    ))}
+                                    <span className="text-gray-400 text-xs ml-2 tracking-wide">
+                                        ({reviews.length} {reviews.length === 1 ? t('review') : t('reviews_count')})
+                                    </span>
                                 </div>
                             </div>
                             <p className="text-gray-600 leading-relaxed font-light text-lg">
@@ -119,7 +192,7 @@ const ProductDetails = () => {
                         {/* Variants */}
                         {product.variants && (
                             <div className="mb-8">
-                                <span className="block text-xs uppercase tracking-widest text-gray-900 font-bold mb-3">Select Size</span>
+                                <span className="block text-xs uppercase tracking-widest text-gray-900 font-bold mb-3">{t('select_size')}</span>
                                 <div className="flex flex-wrap gap-3">
                                     {product.variants.map(variant => (
                                         <button
@@ -134,7 +207,7 @@ const ProductDetails = () => {
                                         onClick={() => setSelectedVariant(null)}
                                         className={`px-6 py-3 border text-sm transition-all duration-200 min-w-[100px] ${!selectedVariant ? 'border-gold bg-gold text-white shadow-md' : 'border-gray-200 text-gray-600 hover:border-gold/50'}`}
                                     >
-                                        <span className="block font-medium">Standard</span>
+                                        <span className="block font-medium">{t('standard')}</span>
                                     </button>
                                 </div>
                             </div>
@@ -152,12 +225,12 @@ const ProductDetails = () => {
                                     onClick={handleAddToCart}
                                     className="flex-1 h-14 bg-coffee-dark hover:bg-gold text-white uppercase tracking-[0.15em] font-bold text-sm transition-all duration-300 shadow-lg hover:shadow-xl"
                                 >
-                                    {t('add_to_cart')} - ${(currentPrice * quantity).toFixed(2)}
+                                    {t('add_to_cart')} - {t('price_with_currency', { amount: (currentPrice * quantity).toFixed(2) })}
                                 </Button>
                             </div>
 
                             <p className="text-xs text-center text-gray-400">
-                                Free worldwide shipping on orders over $150
+                                {t('free_shipping_notice')}
                             </p>
                         </div>
 
@@ -167,22 +240,22 @@ const ProductDetails = () => {
                                 <div className="w-12 h-12 rounded-full bg-[#F9F7F5] flex items-center justify-center mx-auto mb-3 text-gold group-hover:bg-gold group-hover:text-white transition-colors duration-300">
                                     <Truck size={20} />
                                 </div>
-                                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">Global Delivery</h4>
-                                <p className="text-[10px] text-gray-500">Fast & Insured</p>
+                                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">{t('global_delivery')}</h4>
+                                <p className="text-[10px] text-gray-500">{t('fast_insured')}</p>
                             </div>
                             <div className="text-center group">
                                 <div className="w-12 h-12 rounded-full bg-[#F9F7F5] flex items-center justify-center mx-auto mb-3 text-gold group-hover:bg-gold group-hover:text-white transition-colors duration-300">
                                     <ShieldCheck size={20} />
                                 </div>
-                                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">Authenticity</h4>
-                                <p className="text-[10px] text-gray-500">100% Verified</p>
+                                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">{t('authenticity')}</h4>
+                                <p className="text-[10px] text-gray-500">{t('verified_100')}</p>
                             </div>
                             <div className="text-center group">
                                 <div className="w-12 h-12 rounded-full bg-[#F9F7F5] flex items-center justify-center mx-auto mb-3 text-gold group-hover:bg-gold group-hover:text-white transition-colors duration-300">
                                     <RefreshCw size={20} />
                                 </div>
-                                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">Easy Returns</h4>
-                                <p className="text-[10px] text-gray-500">30 Day Policy</p>
+                                <h4 className="text-xs font-bold uppercase tracking-wider mb-1">{t('easy_returns')}</h4>
+                                <p className="text-[10px] text-gray-500">{t('policy_30d')}</p>
                             </div>
                         </div>
 
@@ -190,9 +263,9 @@ const ProductDetails = () => {
                         <div className="mt-12">
                             <Tabs defaultValue="description" className="w-full">
                                 <TabsList className="w-full justify-start border-b border-gray-200 rounded-none h-auto p-0 bg-transparent gap-8">
-                                    <TabsTrigger value="description" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:text-coffee-dark px-0 py-3 uppercase tracking-widest text-xs font-bold text-gray-400 bg-transparent shadow-none">Description</TabsTrigger>
-                                    <TabsTrigger value="origin" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:text-coffee-dark px-0 py-3 uppercase tracking-widest text-xs font-bold text-gray-400 bg-transparent shadow-none">Origin</TabsTrigger>
-                                    <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:text-coffee-dark px-0 py-3 uppercase tracking-widest text-xs font-bold text-gray-400 bg-transparent shadow-none">Reviews</TabsTrigger>
+                                    <TabsTrigger value="description" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:text-coffee-dark px-0 py-3 uppercase tracking-widest text-xs font-bold text-gray-400 bg-transparent shadow-none">{t('description')}</TabsTrigger>
+                                    <TabsTrigger value="origin" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:text-coffee-dark px-0 py-3 uppercase tracking-widest text-xs font-bold text-gray-400 bg-transparent shadow-none">{t('origin')}</TabsTrigger>
+                                    <TabsTrigger value="reviews" className="rounded-none border-b-2 border-transparent data-[state=active]:border-gold data-[state=active]:text-coffee-dark px-0 py-3 uppercase tracking-widest text-xs font-bold text-gray-400 bg-transparent shadow-none">{t('reviews')}</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="description" className="pt-6 text-gray-600 font-light leading-relaxed">
                                     Our Royal Sidr Honey is not just food; it is a medicine, a luxury, and a piece of history. Harvested from the ancient Sidr trees in the protected Do'an valleys, this honey is monochromatic, meaning the bees only fed on the nectar of the Sidr flower.
@@ -201,7 +274,76 @@ const ProductDetails = () => {
                                     Sourced directly from certified beekeepers in Hadramout, Yemen. We ensure that traditional methods are respected to bring you 100% raw, unfiltered honey.
                                 </TabsContent>
                                 <TabsContent value="reviews" className="pt-6">
-                                    <p className="text-gray-500 italic">No reviews yet.</p>
+                                    <div className="space-y-12">
+                                        {/* Review Submission Form */}
+                                        {localStorage.getItem('token') ? (
+                                            <div className="bg-[#F9F7F5] p-6 rounded-sm">
+                                                <h3 className="font-serif font-bold text-lg text-coffee-dark mb-4">{t('write_review')}</h3>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="block text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">{t('rating')}</label>
+                                                        <div className="flex gap-2">
+                                                            {[1, 2, 3, 4, 5].map(star => (
+                                                                <button
+                                                                    key={star}
+                                                                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                                                                    className={`${newReview.rating >= star ? 'text-gold' : 'text-gray-300'} transition-colors`}
+                                                                >
+                                                                    <Star fill={newReview.rating >= star ? 'currentColor' : 'none'} size={24} />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">{t('comment')}</label>
+                                                        <textarea
+                                                            className="w-full bg-white border border-gray-200 p-4 min-h-[100px] text-sm focus:outline-gold"
+                                                            placeholder={t('share_experience')}
+                                                            value={newReview.comment}
+                                                            onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <Button
+                                                        onClick={handleReviewSubmit}
+                                                        className="bg-coffee-dark text-white uppercase tracking-widest font-bold text-xs px-8 h-10"
+                                                        disabled={submitting}
+                                                    >
+                                                        {submitting ? t('submitting') : t('post_review')}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-sm text-gray-500 bg-[#F9F7F5] p-4 text-center">
+                                                {t('login_to_review')} <button onClick={() => navigate('/login')} className="text-gold font-bold underline">{t('login')}</button>.
+                                            </div>
+                                        )}
+
+                                        {/* Reviews List */}
+                                        <div className="space-y-8">
+                                            {reviews.length > 0 ? (
+                                                reviews.map((rev) => (
+                                                    <div key={rev.id} className="border-b border-gray-100 pb-8">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div>
+                                                                <h4 className="font-bold text-coffee-dark capitalize">
+                                                                    {rev.customers?.first_name} {rev.customers?.last_name}
+                                                                </h4>
+                                                                <div className="flex text-gold mb-1">
+                                                                    {[...Array(5)].map((_, i) => (
+                                                                        <Star key={i} size={12} fill={i < rev.rating ? 'currentColor' : 'none'} className={i < rev.rating ? 'text-gold' : 'text-gray-200'} />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <span className="text-xs text-gray-400">{new Date(rev.created_at).toLocaleDateString()}</span>
+                                                        </div>
+                                                        <p className="text-gray-600 text-sm leading-relaxed">{rev.comment}</p>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-gray-500 italic">{t('no_reviews')}</p>
+                                            )}
+                                        </div>
+                                    </div>
                                 </TabsContent>
                             </Tabs>
                         </div>

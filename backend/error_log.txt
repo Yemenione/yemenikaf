@@ -1,0 +1,7 @@
+[Order Error] 2026-02-03T20:38:02.534Z: Insufficient stock for undefined. Only 0 left.
+Stack: Error: Insufficient stock for undefined. Only 0 left.
+    at C:\Users\utilisateur\Desktop\yemeni\backend\server.js:511:27
+    at async Proxy._transactionWithCallback (C:\Users\utilisateur\Desktop\yemeni\backend\node_modules\@prisma\client\runtime\library.js:128:9534)
+    at async C:\Users\utilisateur\Desktop\yemeni\backend\server.js:501:26
+Code: undefined
+

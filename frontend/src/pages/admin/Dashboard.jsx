@@ -34,8 +34,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const userStr = localStorage.getItem('user');
-                const token = userStr ? JSON.parse(userStr).token : null;
+                const token = localStorage.getItem('token');
 
                 const response = await axios.get('http://localhost:5000/api/admin/stats', {
                     headers: { Authorization: `Bearer ${token}` }

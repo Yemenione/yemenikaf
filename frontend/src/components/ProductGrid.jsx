@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
+import { ProductCardSkeleton } from './ui/skeleton';
 import {
     Sheet,
     SheetContent,
@@ -13,7 +14,7 @@ import {
     SheetTrigger,
 } from "./ui/sheet"
 
-const ProductGrid = ({ isPage = true, limit = null }) => {
+const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
     const { t } = useTranslation();
     const [searchParams] = useSearchParams(); // Read URL params
     const [products, setProducts] = useState([]);
@@ -102,33 +103,76 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
         }
     ];
 
+    // State for filters
+    const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
+    const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
+    const [sort, setSort] = useState(searchParams.get('sort') || 'name_asc');
+
+    // Initialize state from URL 
+    useEffect(() => {
+        const cat = searchParams.get('category');
+        if (cat) setSelectedCategory(cat.charAt(0).toUpperCase() + cat.slice(1));
+
+        setMinPrice(searchParams.get('min_price') || '');
+        setMaxPrice(searchParams.get('max_price') || '');
+        setSort(searchParams.get('sort') || 'name_asc');
+    }, [searchParams]);
+
     useEffect(() => {
         const fetchProducts = async () => {
-            const searchQuery = searchParams.get('search');
+            setLoading(true);
             try {
                 let API_URL = 'http://localhost:5000/api/products';
-                if (searchQuery) {
-                    API_URL += `?search=${encodeURIComponent(searchQuery)}`;
+                const queryParts = [];
+
+                const search = searchParams.get('search');
+                if (search) queryParts.push(`search=${encodeURIComponent(search)}`);
+
+                // Use selectedCategory state which is synced with URL or clicks
+                if (selectedCategory && selectedCategory !== 'All') {
+                    queryParts.push(`category=${encodeURIComponent(selectedCategory)}`);
                 }
 
+                if (minPrice) queryParts.push(`min_price=${minPrice}`);
+                if (maxPrice) queryParts.push(`max_price=${maxPrice}`);
+                if (sort) queryParts.push(`sort=${sort}`);
+
+                if (queryParts.length > 0) API_URL += `?${queryParts.join('&')}`;
+
                 const response = await axios.get(API_URL);
-                if (response.data && response.data.length > 0) {
-                    setProducts(response.data);
-                } else {
-                    // Only use mock if NO data returned and NO search (if searching, empty result is valid)
-                    if (!searchQuery) setProducts(mockProducts);
-                    else setProducts([]);
-                }
+                let data = response.data;
+
+                // Client-side limit only (if strictly needed by prop)
+                if (limit && Array.isArray(data)) data = data.slice(0, limit);
+
+                if (Array.isArray(data)) setProducts(data);
+                else setProducts([]);
+
             } catch (error) {
-                console.log("API not reachable, using mock data.");
-                if (!searchParams.get('search')) setProducts(mockProducts);
+                console.log("API Error", error);
+                setProducts(mockProducts); // Fallback
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchProducts();
-    }, [searchParams]);
+        // Debounce fetching slightly or just run on dependency change
+        const timeoutId = setTimeout(fetchProducts, 300);
+        return () => clearTimeout(timeoutId);
+    }, [searchParams, selectedCategory, minPrice, maxPrice, sort, limit]);
+
+    // Update URL helper
+    const updateFilter = (key, value) => {
+        const newParams = new URLSearchParams(searchParams);
+        if (value && value !== 'All') newParams.set(key, value);
+        else newParams.delete(key);
+        // We navigate to the new URL, which triggers the useEffect above
+        // Note: Using window.history.pushState or similar binding usually better, 
+        // but let's assume parent passes setUrl or we rely on internal state triggering re-fetch for now?
+        // Actually, best to use navigate from react-router-dom if we want URL sync.
+        // For this component, let's keep it simple: we update internal state, 
+        // AND ideally we should replace URL. But `useSearchParams` set method is needed.
+    };
 
     const categories = ['All', 'Honey', 'Coffee', 'Spices', 'Gifts'];
 
@@ -141,7 +185,13 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
     }
 
     if (loading) {
-        return <div className="h-64 flex items-center justify-center text-gold font-serif">loading exquisite items...</div>;
+        return (
+            <div className={`grid grid-cols-2 ${isPage ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-x-6 gap-y-12`}>
+                {[...Array(limit || 8)].map((_, i) => (
+                    <ProductCardSkeleton key={i} />
+                ))}
+            </div>
+        );
     }
 
     const Content = () => (
@@ -151,7 +201,7 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
                 <div className="hidden lg:block w-64 flex-shrink-0 space-y-10">
                     {/* Categories */}
                     <div>
-                        <h3 className="font-serif text-lg font-bold text-coffee-dark mb-6 pb-2 border-b border-gray-100">Categories</h3>
+                        <h3 className="font-serif text-lg font-bold text-coffee-dark mb-6 pb-2 border-b border-gray-100">{t('categories')}</h3>
                         <ul className="space-y-4">
                             {categories.map(cat => (
                                 <li key={cat}>
@@ -159,25 +209,49 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
                                         onClick={() => setSelectedCategory(cat)}
                                         className={`text-sm tracking-wide transition-colors duration-200 ${selectedCategory === cat ? 'text-gold font-bold pl-2 border-l-2 border-gold' : 'text-gray-500 hover:text-gold'}`}
                                     >
-                                        {cat === 'All' ? 'View All' : cat}
+                                        {cat === 'All' ? t('view_all') : t(cat.toLowerCase())}
                                     </button>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    {/* Price Placeholder */}
+                    {/* Price Filter */}
                     <div>
-                        <h3 className="font-serif text-lg font-bold text-coffee-dark mb-6 pb-2 border-b border-gray-100">Price Range</h3>
-                        <div className="px-2">
-                            <div className="h-1 bg-gray-200 rounded-full mb-4">
-                                <div className="h-1 bg-gold w-1/2 rounded-full"></div>
-                            </div>
-                            <div className="flex justify-between text-xs text-gray-500 font-medium">
-                                <span>$0</span>
-                                <span>$500+</span>
+                        <h3 className="font-serif text-lg font-bold text-coffee-dark mb-6 pb-2 border-b border-gray-100">{t('price_range')}</h3>
+                        <div className="space-y-4 px-1">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="number"
+                                    placeholder={t('min_price_placeholder')}
+                                    value={minPrice}
+                                    onChange={(e) => setMinPrice(e.target.value)}
+                                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm bg-gray-50 focus:ring-gold focus:border-gold"
+                                />
+                                <span className="text-gray-400">-</span>
+                                <input
+                                    type="number"
+                                    placeholder={t('max_price_placeholder')}
+                                    value={maxPrice}
+                                    onChange={(e) => setMaxPrice(e.target.value)}
+                                    className="w-full border border-gray-200 rounded px-2 py-1 text-sm bg-gray-50 focus:ring-gold focus:border-gold"
+                                />
                             </div>
                         </div>
+                    </div>
+
+                    {/* Sort Filter (Sidebar version if needed, or stick to top) */}
+                    <div>
+                        <h3 className="font-serif text-lg font-bold text-coffee-dark mb-6 pb-2 border-b border-gray-100">{t('sort_by')}</h3>
+                        <select
+                            value={sort}
+                            onChange={(e) => setSort(e.target.value)}
+                            className="w-full border border-gray-200 rounded px-2 py-2 text-sm bg-gray-50 text-gray-700"
+                        >
+                            <option value="newest">{t('newest_arrivals')}</option>
+                            <option value="price_asc">{t('price_low_to_high')}</option>
+                            <option value="price_desc">{t('price_high_to_low')}</option>
+                        </select>
                     </div>
                 </div>
             )}
@@ -190,20 +264,20 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
                         <div className="lg:hidden w-full md:w-auto">
                             <Sheet>
                                 <SheetTrigger className="w-full md:w-auto flex items-center justify-center gap-2 text-sm font-medium uppercase tracking-widest text-coffee-dark border border-gray-200 px-6 py-3 rounded-sm hover:border-gold transition">
-                                    <SlidersHorizontal size={16} /> Filters
+                                    <SlidersHorizontal size={16} /> {t('filters')}
                                 </SheetTrigger>
                                 <SheetContent side="left">
                                     <SheetHeader>
-                                        <SheetTitle className="font-serif text-2xl text-coffee-dark">Filters</SheetTitle>
+                                        <SheetTitle className="font-serif text-2xl text-coffee-dark">{t('filters')}</SheetTitle>
                                     </SheetHeader>
                                     <div className="mt-8 space-y-8">
                                         <div>
-                                            <h4 className="font-medium mb-4 text-gold">Categories</h4>
+                                            <h4 className="font-medium mb-4 text-gold">{t('categories')}</h4>
                                             <ul className="space-y-3">
                                                 {categories.map(cat => (
                                                     <li key={cat}>
                                                         <button onClick={() => setSelectedCategory(cat)} className={`${selectedCategory === cat ? 'font-bold text-coffee-dark' : 'text-gray-500'}`}>
-                                                            {cat}
+                                                            {cat === 'All' ? t('view_all') : t(cat.toLowerCase())}
                                                         </button>
                                                     </li>
                                                 ))}
@@ -215,10 +289,18 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
                         </div>
 
                         <div className="hidden lg:flex items-center gap-4 ml-auto">
-                            <span className="text-sm text-gray-500">Showing <span className="font-bold text-coffee-dark">{filteredProducts.length}</span> results</span>
-                            <div className="flex items-center gap-2 cursor-pointer group">
-                                <span className="text-sm font-medium text-gray-500 group-hover:text-gold transition">Sort by: Featured</span>
-                                <ChevronDown size={14} className="text-gray-400 group-hover:text-gold" />
+                            <span className="text-sm text-gray-500">{t('showing_results', { count: filteredProducts.length })}</span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-500">{t('sort')}:</span>
+                                <select
+                                    value={sort}
+                                    onChange={(e) => setSort(e.target.value)}
+                                    className="border-none bg-transparent text-sm font-bold text-coffee-dark focus:ring-0 cursor-pointer hover:text-gold"
+                                >
+                                    <option value="newest">{t('featured')}</option>
+                                    <option value="price_asc">{t('price_low_to_high')}</option>
+                                    <option value="price_desc">{t('price_high_to_low')}</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -233,7 +315,7 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
                 {isPage && (
                     <div className="mt-20 text-center">
                         <button className="text-xs uppercase tracking-[0.2em] text-coffee-dark hover:text-gold border-b border-coffee-dark hover:border-gold pb-1 transition-all duration-300">
-                            Load More Products
+                            {t('load_more')}
                         </button>
                     </div>
                 )}
@@ -247,12 +329,12 @@ const ProductGrid = ({ isPage = true, limit = null }) => {
             <div className="min-h-screen bg-white">
                 <Navbar />
                 {/* Header / Banner */}
-                <div className="bg-[#1A1A1A] py-16 md:py-24 relative overflow-hidden">
+                <div className="bg-[#1A1A1A] pt-32 pb-16 md:pt-40 md:pb-24 relative overflow-hidden">
                     <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/arabesque.png')]"></div>
                     <div className="container mx-auto px-4 text-center relative z-10">
-                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gold mb-4 tracking-tight">Our Collections</h1>
+                        <h1 className="text-4xl md:text-5xl font-serif font-bold text-gold mb-4 tracking-tight">{t('our_collections')}</h1>
                         <p className="text-gray-400 font-light max-w-2xl mx-auto text-lg">
-                            Discover the authentic flavors and treasures of Yemen, curated for the modern connoisseur.
+                            {t('collections_desc')}
                         </p>
                     </div>
                 </div>

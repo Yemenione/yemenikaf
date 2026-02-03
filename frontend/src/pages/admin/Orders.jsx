@@ -9,8 +9,7 @@ const AdminOrders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const userStr = localStorage.getItem('user');
-                const token = userStr ? JSON.parse(userStr).token : null;
+                const token = localStorage.getItem('token');
 
                 const response = await axios.get('http://localhost:5000/api/admin/orders', {
                     headers: { Authorization: `Bearer ${token}` }
@@ -24,6 +23,24 @@ const AdminOrders = () => {
         };
         fetchOrders();
     }, []);
+
+    const handleStatusChange = async (orderId, newStatus) => {
+        try {
+            const token = localStorage.getItem('token');
+            // Optimistic update
+            setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+
+            await axios.put(`http://localhost:5000/api/admin/orders/${orderId}/status`,
+                { status: newStatus },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            alert(`Order status updated to ${newStatus}`);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update status");
+            // Revert on error (could fetch orders again)
+        }
+    };
 
     if (loading) return <div>Loading orders...</div>;
 
@@ -54,11 +71,20 @@ const AdminOrders = () => {
                                     {new Date(order.created_at).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
-                                            order.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                                        }`}>
-                                        {order.status}
-                                    </span>
+                                    <select
+                                        value={order.status}
+                                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                                        className={`px-2 py-1 text-xs font-semibold rounded-full border-none focus:ring-0 cursor-pointer ${order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' :
+                                            order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' :
+                                                order.status === 'Delivered' ? 'bg-green-100 text-green-800' :
+                                                    'bg-red-100 text-red-800'
+                                            }`}
+                                    >
+                                        <option value="Processing">Processing</option>
+                                        <option value="Shipped">Shipped</option>
+                                        <option value="Delivered">Delivered</option>
+                                        <option value="Cancelled">Cancelled</option>
+                                    </select>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-gray-500">${order.total_amount}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

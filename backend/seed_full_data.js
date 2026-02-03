@@ -77,6 +77,33 @@ async function main() {
         }
     }
 
+    const configs = [
+        { key: 'site_name', value: 'Yemeni Treasures', group: 'general', type: 'text', isPublic: true, description: 'The public name of the store' },
+        { key: 'site_logo', value: 'https://placehold.co/200x60/transparent/D4AF37?text=Yemeni+Market', group: 'general', type: 'image', isPublic: true, description: 'URL of the site logo image' },
+        { key: 'site_currency', value: 'USD', group: 'general', type: 'text', isPublic: true, description: 'Default currency symbol/code' },
+        { key: 'stripe_secret_key', value: 'sk_test_PLACEHOLDER', group: 'payment', type: 'text', isPublic: false, description: 'Secret key for Stripe backend operations' },
+        { key: 'stripe_public_key', value: 'pk_test_51Sv49G2Q5lB4HkA9tiDFwwOuhxHzmArrgEfGDgo2R5HyvdHktjrJaiwWJSENR36DRKain0CdFxUvVR0yaNCzQdsn00cwsw2rCJ', group: 'payment', type: 'text', isPublic: true, description: 'Public key for Stripe frontend elements' },
+        { key: 'smtp_host', value: 'smtp.gmail.com', group: 'email', type: 'text', isPublic: false, description: 'SMTP server host address' },
+        { key: 'smtp_port', value: '587', group: 'email', type: 'text', isPublic: false, description: 'SMTP server port' },
+        { key: 'smtp_user', value: 'user@example.com', group: 'email', type: 'text', isPublic: false, description: 'SMTP username for authentication' },
+        { key: 'smtp_pass', value: 'password', group: 'email', type: 'text', isPublic: false, description: 'SMTP password for authentication' },
+        { key: 'smtp_from_email', value: 'no-reply@yemeni.market', group: 'email', type: 'text', isPublic: false, description: 'Sender email address for outgoing mails' },
+        { key: 'smtp_from_name', value: 'Yemeni Market', group: 'email', type: 'text', isPublic: true, description: 'Sender name for outgoing mails' },
+        { key: 'store_email', value: 'admin@yemeni.market', group: 'general', type: 'text', isPublic: true, description: 'Primary contact email for the store' }
+    ];
+
+    for (const conf of configs) {
+        const existing = await prisma.store_config.findUnique({ where: { key: conf.key } });
+        if (!existing) {
+            await prisma.store_config.create({ data: conf });
+        } else {
+            // Optional: Update if exists to ensure values are correct
+            await prisma.store_config.update({ where: { key: conf.key }, data: conf });
+        }
+    }
+
+
+
     console.log("Seeding complete.");
 }
 

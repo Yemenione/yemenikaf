@@ -5,22 +5,26 @@ import { useTranslation } from 'react-i18next';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
 const ProductCard = ({ product }) => {
     const { t, i18n } = useTranslation();
     const { addToCart } = useCart();
+    const { toggleWishlist, isInWishlist } = useWishlist();
 
     const getName = () => product[`name_${i18n.language}`] || product.name;
     const categoryName = product.category || "Collection";
+
+    const isFavorite = isInWishlist(product.id);
 
     return (
         <div className="group relative w-full">
             {/* Image Container with Elegant Hover */}
             <div className="relative aspect-[3/4] overflow-hidden bg-[#F9F7F5]">
-                {/* Badges */}
+                {/* Badges ... (rest same) */}
                 <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
                     {product.is_new && (
-                        <span className="bg-coffee-dark text-white text-[10px] uppercase tracking-widest px-3 py-1 font-medium">New</span>
+                        <span className="bg-coffee-dark text-white text-[10px] uppercase tracking-widest px-3 py-1 font-medium">{t('new')}</span>
                     )}
                     {product.discount && (
                         <span className="bg-red-800 text-white text-[10px] uppercase tracking-widest px-3 py-1 font-medium">-{product.discount}%</span>
@@ -28,8 +32,11 @@ const ProductCard = ({ product }) => {
                 </div>
 
                 {/* Wishlist Button (Top Right) */}
-                <button className="absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 bg-white/90 p-2 rounded-full hover:bg-gold hover:text-coffee-dark text-gray-600 shadow-sm">
-                    <Heart size={18} />
+                <button
+                    onClick={() => toggleWishlist(product)}
+                    className={`absolute top-4 right-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 p-2 rounded-full shadow-sm ${isFavorite ? 'bg-gold text-white' : 'bg-white/90 text-gray-600 hover:bg-gold hover:text-coffee-dark'}`}
+                >
+                    <Heart size={18} fill={isFavorite ? "currentColor" : "none"} />
                 </button>
 
                 {/* Main Image */}
@@ -51,7 +58,7 @@ const ProductCard = ({ product }) => {
                         {t('add_to_cart')}
                     </Button>
                     <Link to={`/products/${product.id}`} className="text-[10px] uppercase tracking-wider text-gray-500 hover:text-gold border-b border-transparent hover:border-gold transition-all">
-                        View Details
+                        {t('view_details')}
                     </Link>
                 </div>
             </div>
@@ -66,9 +73,9 @@ const ProductCard = ({ product }) => {
                 </Link>
                 <div className="flex items-center justify-center gap-3">
                     {product.old_price && (
-                        <span className="text-sm text-gray-400 line-through decoration-gold/50 decoration-1 font-light">{product.old_price}</span>
+                        <span className="text-sm text-gray-400 line-through decoration-gold/50 decoration-1 font-light">{t('price_with_currency', { amount: product.old_price })}</span>
                     )}
-                    <span className="text-base font-medium text-coffee-dark tracking-wide">{product.price} <span className="text-xs uppercase text-gray-500">USD</span></span>
+                    <span className="text-base font-medium text-coffee-dark tracking-wide">{t('price_with_currency', { amount: product.price })}</span>
                 </div>
             </div>
         </div>

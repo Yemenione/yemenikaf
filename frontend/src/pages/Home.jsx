@@ -1,26 +1,29 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '../components/Navbar';
 import ProductGrid from '../components/ProductGrid';
 import { ArrowRight, Star, ShieldCheck, Truck, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
-import Hero3D from '../components/Three/Hero3D'; // Import 3D Hero
+import HeroCarousel from '../components/HeroCarousel'; // Import Carousel
+import Newsletter from '../components/Newsletter';
 
 const Home = () => {
+    const { t } = useTranslation();
 
     return (
         <div className="min-h-screen bg-white font-sans text-gray-900">
             <Navbar />
 
             {/* Cinematic Hero Section */}
-            <Hero3D />
+            <HeroCarousel />
 
             {/* 2. CATEGORY MOSAIC */}
             <section className="py-24 bg-white">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
-                        <span className="text-gold text-xs font-bold uppercase tracking-widest mb-3 block">From the Source</span>
-                        <h2 className="text-4xl font-serif text-coffee-dark">Curated Collections</h2>
+                        <span className="text-gold text-xs font-bold uppercase tracking-widest mb-3 block">{t('from_source')}</span>
+                        <h2 className="text-4xl font-serif text-coffee-dark">{t('curated_collections')}</h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 h-auto lg:h-[600px]">
@@ -29,8 +32,8 @@ const Home = () => {
                             <img src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Sidr Honey" />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                             <div className="absolute bottom-8 left-8 text-white">
-                                <h3 className="text-3xl font-serif font-bold mb-2">Sidr Honey</h3>
-                                <Link to="/products?category=honey" className="text-sm font-bold uppercase tracking-widest border-b border-white pb-1 hover:text-gold hover:border-gold transition-all">Explore Collection</Link>
+                                <h3 className="text-3xl font-serif font-bold mb-2">{t('sidr_honey')}</h3>
+                                <Link to="/products?category=honey" className="text-sm font-bold uppercase tracking-widest border-b border-white pb-1 hover:text-gold hover:border-gold transition-all">{t('explore_collection')}</Link>
                             </div>
                         </div>
 
@@ -40,8 +43,8 @@ const Home = () => {
                                 <img src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Coffee" />
                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                                 <div className="absolute bottom-6 left-6 text-white">
-                                    <h3 className="text-2xl font-serif font-bold mb-1">Mountain Coffee</h3>
-                                    <Link to="/products?category=coffee" className="text-xs font-bold uppercase tracking-widest hover:text-gold transition-colors">Shop Now</Link>
+                                    <h3 className="text-2xl font-serif font-bold mb-1">{t('mountain_coffee')}</h3>
+                                    <Link to="/products?category=coffee" className="text-xs font-bold uppercase tracking-widest hover:text-gold transition-colors">{t('shop_now')}</Link>
                                 </div>
                             </div>
                         </div>
@@ -58,33 +61,56 @@ const Home = () => {
                             <img src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Gifts" />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                             <div className="absolute bottom-6 left-6 text-white">
-                                <h3 className="text-2xl font-serif font-bold mb-1">Gift Sets</h3>
-                                <Link to="/products?category=gifts" className="text-xs font-bold uppercase tracking-widest hover:text-gold transition-colors">View Gifts</Link>
+                                <h3 className="text-2xl font-serif font-bold mb-1">{t('gift_sets')}</h3>
+                                <Link to="/products?category=gifts" className="text-xs font-bold uppercase tracking-widest hover:text-gold transition-colors">{t('view_gifts')}</Link>
                             </div>
                         </div>
                         <div className="relative group overflow-hidden cursor-pointer">
                             <img src="https://images.unsplash.com/photo-1596040033229-a9821ebd058d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Spices" />
                             <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors"></div>
                             <div className="absolute bottom-6 left-6 text-white">
-                                <h3 className="text-2xl font-serif font-bold mb-1">Rare Spices</h3>
-                                <Link to="/products?category=spices" className="text-xs font-bold uppercase tracking-widest hover:text-gold transition-colors">Shop Spices</Link>
+                                <h3 className="text-2xl font-serif font-bold mb-1">{t('rare_spices')}</h3>
+                                <Link to="/products?category=spices" className="text-xs font-bold uppercase tracking-widest hover:text-gold transition-colors">{t('shop_spices')}</Link>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* 3. BEST SELLERS */}
+            {/* 3. SIGNATURE COLLECTIONS */}
+            <section className="py-20 bg-[#fafafa]">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <span className="text-gold text-xs font-bold uppercase tracking-widest mb-2 block">{t('liquid_gold')}</span>
+                        <h2 className="text-3xl font-serif text-coffee-dark">{t('royal_sidr_honey')}</h2>
+                        <Link to="/products?category=honey" className="text-xs font-bold uppercase tracking-widest border-b border-transparent hover:border-gold hover:text-gold transition-all mt-4 inline-block">{t('view_collection')}</Link>
+                    </div>
+                    <ProductGrid limit={4} category="honey" isPage={false} />
+                </div>
+            </section>
+
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4">
+                    <div className="text-center mb-12">
+                        <span className="text-gold text-xs font-bold uppercase tracking-widest mb-2 block">{t('mountain_haraz')}</span>
+                        <h2 className="text-3xl font-serif text-coffee-dark">{t('premium_coffee')}</h2>
+                        <Link to="/products?category=coffee" className="text-xs font-bold uppercase tracking-widest border-b border-transparent hover:border-gold hover:text-gold transition-all mt-4 inline-block">{t('view_collection')}</Link>
+                    </div>
+                    <ProductGrid limit={4} category="coffee" isPage={false} />
+                </div>
+            </section>
+
+            {/* 4. BEST SELLERS */}
             <section className="py-24 bg-[#fafafa]">
                 <div className="container mx-auto px-4">
                     <div className="flex justify-between items-end mb-12">
                         <div>
-                            <span className="text-gold text-xs font-bold uppercase tracking-widest mb-2 block">Weekly Favorites</span>
-                            <h2 className="text-3xl font-serif text-coffee-dark">Best Sellers</h2>
+                            <span className="text-gold text-xs font-bold uppercase tracking-widest mb-2 block">{t('weekly_favorites')}</span>
+                            <h2 className="text-3xl font-serif text-coffee-dark">{t('all_best_sellers')}</h2>
                         </div>
                         <Link to="/products">
                             <Button variant="outline" className="hidden md:flex border-gray-300 hover:border-gold hover:text-gold uppercase text-xs tracking-widest font-bold">
-                                View All Products
+                                {t('view_all_products')}
                             </Button>
                         </Link>
                     </div>
@@ -93,7 +119,7 @@ const Home = () => {
 
                     <div className="mt-12 text-center md:hidden">
                         <Link to="/products">
-                            <Button variant="outline" className="w-full">View All</Button>
+                            <Button variant="outline" className="w-full">{t('view_all')}</Button>
                         </Link>
                     </div>
                 </div>
@@ -105,23 +131,23 @@ const Home = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-12 text-center md:text-left">
                         <div className="space-y-4">
                             <ShieldCheck className="w-10 h-10 text-gold mx-auto md:mx-0" strokeWidth={1} />
-                            <h4 className="font-serif text-xl">100% Authentic</h4>
-                            <p className="text-gray-400 text-sm leading-relaxed">Verified origin from the most prestigious farms in Yemen.</p>
+                            <h4 className="font-serif text-xl">{t('authentic_title')}</h4>
+                            <p className="text-gray-400 text-sm leading-relaxed">{t('authentic_desc')}</p>
                         </div>
                         <div className="space-y-4">
                             <Truck className="w-10 h-10 text-gold mx-auto md:mx-0" strokeWidth={1} />
-                            <h4 className="font-serif text-xl">Global Shipping</h4>
-                            <p className="text-gray-400 text-sm leading-relaxed">Fast, insured delivery to your doorstep, anywhere in the world.</p>
+                            <h4 className="font-serif text-xl">{t('global_delivery')}</h4>
+                            <p className="text-gray-400 text-sm leading-relaxed">{t('global_shipping_desc')}</p>
                         </div>
                         <div className="space-y-4">
                             <Star className="w-10 h-10 text-gold mx-auto md:mx-0" strokeWidth={1} />
-                            <h4 className="font-serif text-xl">Premium Quality</h4>
-                            <p className="text-gray-400 text-sm leading-relaxed">Only the highest grade (A+) products make it to our collection.</p>
+                            <h4 className="font-serif text-xl">{t('premium_quality_title')}</h4>
+                            <p className="text-gray-400 text-sm leading-relaxed">{t('premium_quality_desc')}</p>
                         </div>
                         <div className="space-y-4">
                             <ShoppingBag className="w-10 h-10 text-gold mx-auto md:mx-0" strokeWidth={1} />
-                            <h4 className="font-serif text-xl">Secure Checkout</h4>
-                            <p className="text-gray-400 text-sm leading-relaxed">Protected payments via Stripe with full buyer protection.</p>
+                            <h4 className="font-serif text-xl">{t('secure_checkout_title')}</h4>
+                            <p className="text-gray-400 text-sm leading-relaxed">{t('secure_checkout_desc')}</p>
                         </div>
                     </div>
                 </div>
@@ -133,35 +159,40 @@ const Home = () => {
                     <div>
                         <h4 className="text-2xl font-serif font-bold mb-6 text-coffee-dark">YEMENI<span className="text-gold">.MARKET</span></h4>
                         <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                            Bridging the gap between ancient Yemeni tradition and the modern world.
+                            {t('footer_tagline')}
                         </p>
                     </div>
                     <div>
-                        <h5 className="font-bold uppercase tracking-widest text-xs mb-6 text-gray-900">Shop</h5>
+                        <h5 className="font-bold uppercase tracking-widest text-xs mb-6 text-gray-900">{t('shop')}</h5>
                         <ul className="space-y-3 text-sm text-gray-500">
-                            <li><Link to="/products?category=honey" className="hover:text-gold transition">Honey</Link></li>
-                            <li><Link to="/products?category=coffee" className="hover:text-gold transition">Coffee</Link></li>
-                            <li><Link to="/products?category=spices" className="hover:text-gold transition">Spices</Link></li>
+                            <li><Link to="/products?category=honey" className="hover:text-gold transition">{t('honey')}</Link></li>
+                            <li><Link to="/products?category=coffee" className="hover:text-gold transition">{t('coffee')}</Link></li>
+                            <li><Link to="/products?category=spices" className="hover:text-gold transition">{t('spices')}</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h5 className="font-bold uppercase tracking-widest text-xs mb-6 text-gray-900">Support</h5>
+                        <h5 className="font-bold uppercase tracking-widest text-xs mb-6 text-gray-900">{t('support')}</h5>
                         <ul className="space-y-3 text-sm text-gray-500">
-                            <li><Link to="/contact" className="hover:text-gold transition">Contact Us</Link></li>
-                            <li><Link to="/shipping" className="hover:text-gold transition">Shipping</Link></li>
-                            <li><Link to="/returns" className="hover:text-gold transition">Returns</Link></li>
+                            <li><Link to="/contact" className="hover:text-gold transition">{t('contact_us')}</Link></li>
+                            <li><Link to="/privacy" className="hover:text-gold transition">{t('privacy_policy')}</Link></li>
+                            <li><Link to="/terms" className="hover:text-gold transition">{t('terms')}</Link></li>
+                            <li><Link to="/returns" className="hover:text-gold transition">{t('returns_refunds')}</Link></li>
                         </ul>
                     </div>
                     <div>
-                        <h5 className="font-bold uppercase tracking-widest text-xs mb-6 text-gray-900">Newsletter</h5>
-                        <div className="flex flex-col gap-3">
-                            <input type="email" placeholder="Email address" className="bg-gray-50 border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-gold" />
-                            <Button className="bg-coffee-dark text-white hover:bg-gold hover:text-white uppercase text-xs font-bold tracking-widest">Subscribe</Button>
-                        </div>
+                        <h5 className="font-bold uppercase tracking-widest text-xs mb-6 text-gray-900">{t('newsletter')}</h5>
+                        {/* Integrated Component elsewhere, keeping this for layout balance or removing */}
+                        <p className="text-sm text-gray-500">{t('newsletter_join')}</p>
                     </div>
                 </div>
+
+                {/* Full Width Newsletter Component */}
+                <div className="mb-20">
+                    <Newsletter />
+                </div>
+
                 <div className="container mx-auto px-4 border-t border-gray-100 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
-                    <p>&copy; 2026 Yemeni Market. All rights reserved.</p>
+                    <p>&copy; 2026 Yemeni Market. {t('all_rights_reserved')}</p>
                 </div>
             </footer>
         </div>

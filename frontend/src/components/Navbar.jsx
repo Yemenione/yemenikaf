@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Search, Menu, User, Heart, ChevronDown, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useCart } from '../context/CartContext'; // Assuming this exists from previous steps
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+import { useStoreConfig } from '../context/StoreConfigContext';
+import { useAuth } from '../context/AuthContext';
 
 // UI Components
 import { Button } from './ui/button';
@@ -14,9 +17,24 @@ const Navbar = () => {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const { cartItems } = useCart();
+    const { wishlist } = useWishlist();
+    const config = useStoreConfig(); // Get dynamic config
+    const { user } = useAuth();
 
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [activeMenu, setActiveMenu] = useState(null);
+    const [scrolled, setScrolled] = useState(false);
+
+    // Scroll Effect Listener
+    useEffect(() => {
+        const handleScroll = () => {
+            const offset = window.scrollY;
+            if (offset > 50) setScrolled(true);
+            else setScrolled(false);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
@@ -25,44 +43,50 @@ const Navbar = () => {
     };
 
     const navLinks = [
-        { name: 'Honey', href: '/products?category=honey', image: 'https://placehold.co/400x300/D4AF37/FFFFFF?text=Honey' },
-        { name: 'Coffee', href: '/products?category=coffee', image: 'https://placehold.co/400x300/4B3621/FFFFFF?text=Coffee' },
-        { name: 'Spices', href: '/products?category=spices', image: 'https://placehold.co/400x300/E85D04/FFFFFF?text=Spices' },
-        { name: 'Gifts', href: '/products?category=gifts', image: 'https://placehold.co/400x300/800000/FFFFFF?text=Gifts' }
+        { name: t('honey'), href: '/products?category=honey', image: 'https://placehold.co/400x300/D4AF37/FFFFFF?text=Honey' },
+        { name: t('coffee'), href: '/products?category=coffee', image: 'https://placehold.co/400x300/4B3621/FFFFFF?text=Coffee' },
+        { name: t('spices'), href: '/products?category=spices', image: 'https://placehold.co/400x300/E85D04/FFFFFF?text=Spices' },
+        { name: t('gifts'), href: '/products?category=gifts', image: 'https://placehold.co/400x300/800000/FFFFFF?text=Gifts' }
     ];
 
     return (
-        <div className="flex flex-col w-full z-50">
-            {/* 1. Utility Bar (Dark) */}
-            <div className="bg-[#1a1a1a] text-white py-2 px-4 text-[10px] md:text-xs">
+        <div className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+            {/* 1. Utility Bar (Hidden on scroll for cleaner look, or adapt colors) */}
+            <div className={`py-1 px-6 text-[10px] tracking-wider transition-colors duration-300 ${scrolled ? 'bg-coffee-dark text-white' : 'bg-black/80 text-white backdrop-blur-sm'}`}>
                 <div className="container mx-auto flex justify-between items-center">
-                    <p className="hidden md:block tracking-widest uppercase font-medium text-gold">Free Worldwide Shipping orders $150+</p>
+                    <p className="hidden md:flex items-center gap-2 font-medium text-gold/90">
+                        <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></span>
+                        {t('free_shipping_notice')}
+                    </p>
                     <div className="flex items-center gap-6 ml-auto">
-                        <div className="flex items-center gap-4 border-r border-white/20 pr-6">
-                            <button onClick={() => changeLanguage('en')} className={`hover:text-gold transition ${i18n.language === 'en' ? 'font-bold' : ''}`}>EN</button>
-                            <button onClick={() => changeLanguage('ar')} className={`hover:text-gold transition font-serif ${i18n.language === 'ar' ? 'font-bold' : ''}`}>عربي</button>
+                        <div className="flex items-center gap-3 border-r border-white/10 pr-6 text-gray-400">
+                            <button onClick={() => changeLanguage('fr')} className={`hover:text-white transition-all duration-300 ${i18n.language === 'fr' ? 'text-white font-bold underline decoration-gold underline-offset-4' : ''}`}>FR</button>
+                            <span className="text-white/20">|</span>
+                            <button onClick={() => changeLanguage('en')} className={`hover:text-white transition-all duration-300 ${i18n.language === 'en' ? 'text-white font-bold underline decoration-gold underline-offset-4' : ''}`}>EN</button>
+                            <span className="text-white/20">|</span>
+                            <button onClick={() => changeLanguage('ar')} className={`hover:text-white transition-all duration-300 font-serif ${i18n.language === 'ar' ? 'text-white font-bold underline decoration-gold underline-offset-4' : ''}`}>عربي</button>
                         </div>
-                        <Link to="/help" className="hover:text-gold transition">Help</Link>
+                        <Link to="/help" className="hover:text-gold transition-colors duration-300">{t('help_support')}</Link>
                     </div>
                 </div>
             </div>
 
             {/* 2. Main Header (Logo & Icons) */}
-            <header className="bg-white border-b border-gray-100 relative z-40">
-                <div className="container mx-auto px-4 h-24 flex items-center justify-between">
+            <header className={`border-b border-white/10 relative z-40 transition-all ${scrolled ? 'py-0.5' : 'py-1'}`}>
+                <div className="container mx-auto px-4 h-12 flex items-center justify-between">
 
                     {/* Mobile Menu Trigger */}
                     <div className="md:hidden">
                         <Sheet>
                             <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon"><Menu className="w-6 h-6" /></Button>
+                                <Button variant="ghost" size="icon" className={scrolled ? 'text-black' : 'text-white'}><Menu className="w-5 h-5" /></Button>
                             </SheetTrigger>
                             <SheetContent side="left" className="w-[300px]">
                                 <div className="flex flex-col gap-6 mt-8">
-                                    <h2 className="font-serif text-2xl font-bold text-coffee-dark px-2">Menu</h2>
+                                    <h2 className="font-serif text-2xl font-bold text-coffee-dark px-2">{t('menu')}</h2>
                                     <nav className="flex flex-col space-y-4 px-2">
-                                        <Link to="/" className="text-lg font-medium border-b border-gray-100 pb-2">Home</Link>
-                                        <Link to="/products" className="text-lg font-medium border-b border-gray-100 pb-2">Shop All</Link>
+                                        <Link to="/" className="text-lg font-medium border-b border-gray-100 pb-2">{t('home')}</Link>
+                                        <Link to="/products" className="text-lg font-medium border-b border-gray-100 pb-2">{t('shop_all')}</Link>
                                         {navLinks.map(link => (
                                             <Link key={link.name} to={link.href} className="text-lg text-gray-600 hover:text-gold transition-colors pb-2">
                                                 {link.name}
@@ -77,9 +101,13 @@ const Navbar = () => {
                     {/* Logo (Centered on Desktop) */}
                     <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 md:static md:transform-none">
                         <div className="text-center">
-                            <h1 className="text-3xl md:text-4xl font-serif font-bold text-coffee-dark tracking-tight">
-                                YEMENI<span className="text-gold">.MARKET</span>
-                            </h1>
+                            {config?.site_logo ? (
+                                <img src={config.site_logo} alt={config.site_name} className="h-7 md:h-9 object-contain" />
+                            ) : (
+                                <h1 className={`text-lg md:text-xl font-serif font-bold tracking-tight ${scrolled ? 'text-coffee-dark' : 'text-white'}`}>
+                                    YEMENI<span className="text-gold">.MARKET</span>
+                                </h1>
+                            )}
                         </div>
                     </Link>
 
@@ -92,7 +120,7 @@ const Navbar = () => {
                                     <input
                                         autoFocus
                                         className="w-full bg-transparent border-none focus:ring-0 px-4 py-2 text-sm"
-                                        placeholder="Search products..."
+                                        placeholder={t('search_placeholder')}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                                 navigate(`/products?search=${e.target.value}`);
@@ -100,29 +128,43 @@ const Navbar = () => {
                                             }
                                         }}
                                         onBlur={() => {
-                                            // Optional: delay closing so clicks on X work, or check unrelated focus
-                                            // For now keep simple
                                             setTimeout(() => setIsSearchOpen(false), 200);
                                         }}
                                     />
                                     <X size={16} className="mr-3 cursor-pointer text-gray-400" onClick={() => setIsSearchOpen(false)} />
                                 </div>
                             ) : (
-                                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)} className="hover:text-gold transition">
+                                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)} className={`hover:text-gold transition ${scrolled ? 'text-black' : 'text-white'}`}>
                                     <Search className="w-5 h-5" />
                                 </Button>
                             )}
                         </div>
 
-                        <Link to="/login">
-                            <Button variant="ghost" size="icon" className="hidden md:flex hover:text-gold transition">
+                        {/* User Profile Link */}
+                        <Link to={user ? "/profile" : "/login"}>
+                            <Button variant="ghost" size="icon" className={`hidden md:flex hover:text-gold transition ${scrolled ? 'text-black' : 'text-white'}`}>
                                 <User className="w-5 h-5" />
                             </Button>
                         </Link>
 
+                        {/* Wishlist Link */}
+                        <div className="relative">
+                            <Link to="/profile?tab=wishlist">
+                                <Button variant="ghost" size="icon" className={`hover:text-gold transition ${scrolled ? 'text-black' : 'text-white'}`}>
+                                    <Heart className="w-5 h-5" />
+                                    {wishlist && wishlist.length > 0 && (
+                                        <Badge className="absolute -top-1 -right-1 bg-gold hover:bg-gold/90 text-coffee-dark h-4 w-4 flex items-center justify-center rounded-full text-[9px] p-0">
+                                            {wishlist.length}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </Link>
+                        </div>
+
+                        {/* Cart Icon */}
                         <div className="relative">
                             <Link to="/cart">
-                                <Button variant="ghost" size="icon" className="hover:text-gold transition">
+                                <Button variant="ghost" size="icon" className={`hover:text-gold transition ${scrolled ? 'text-black' : 'text-white'}`}>
                                     <ShoppingBag className="w-5 h-5" />
                                     {cartItems && cartItems.length > 0 && (
                                         <Badge className="absolute -top-1 -right-1 bg-gold hover:bg-gold/90 text-coffee-dark h-5 w-5 flex items-center justify-center rounded-full text-[10px]">
@@ -134,14 +176,14 @@ const Navbar = () => {
                         </div>
                     </div>
                 </div>
-            </header>
+            </header >
 
             {/* 3. Navigation Bar (Mega Menu) */}
-            <nav className="hidden md:block bg-white border-b border-gray-100 relative z-30">
+            < nav className={`hidden md:block border-b border-white/10 relative z-30 transition-all ${scrolled ? 'bg-white' : 'bg-transparent'}`}>
                 <div className="container mx-auto flex justify-center">
                     <ul className="flex items-center space-x-12 h-14">
                         <li>
-                            <Link to="/" className="text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4">Home</Link>
+                            <Link to="/" className={`text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4 ${scrolled ? 'text-gray-800' : 'text-white'}`}>{t('home')}</Link>
                         </li>
 
                         {/* Mega Menu Trigger: SHOP */}
@@ -150,8 +192,8 @@ const Navbar = () => {
                             onMouseEnter={() => setActiveMenu('shop')}
                             onMouseLeave={() => setActiveMenu(null)}
                         >
-                            <Link to="/products" className="text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4 flex items-center gap-1">
-                                Shop <ChevronDown size={12} />
+                            <Link to="/products" className={`text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4 flex items-center gap-1 ${scrolled ? 'text-gray-800' : 'text-white'}`}>
+                                {t('shop')} <ChevronDown size={12} />
                             </Link>
 
                             {/* Using Group Hover Logic for CSS-only Mega Menu fallback, or conditional rendering for React */}
@@ -161,7 +203,7 @@ const Navbar = () => {
 
                                         {/* Col 1: Categories */}
                                         <div className="space-y-4">
-                                            <h3 className="font-serif text-lg font-bold text-coffee-dark mb-4">Categories</h3>
+                                            <h3 className="font-serif text-lg font-bold text-coffee-dark mb-4">{t('categories')}</h3>
                                             <ul className="space-y-3">
                                                 {navLinks.map(link => (
                                                     <li key={link.name}>
@@ -170,18 +212,18 @@ const Navbar = () => {
                                                         </Link>
                                                     </li>
                                                 ))}
-                                                <li><Link to="/products" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">View All</Link></li>
+                                                <li><Link to="/products" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">{t('view_all')}</Link></li>
                                             </ul>
                                         </div>
 
                                         {/* Col 2: Featured Collections */}
                                         <div className="space-y-4">
-                                            <h3 className="font-serif text-lg font-bold text-coffee-dark mb-4">Collections</h3>
+                                            <h3 className="font-serif text-lg font-bold text-coffee-dark mb-4">{t('collections')}</h3>
                                             <ul className="space-y-3">
-                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">New Arrivals</Link></li>
-                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">Best Sellers</Link></li>
-                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">Ramadan Specials</Link></li>
-                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">Gift Sets</Link></li>
+                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">{t('new_arrivals')}</Link></li>
+                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">{t('best_sellers')}</Link></li>
+                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">{t('ramadan_specials')}</Link></li>
+                                                <li><Link to="#" className="text-sm text-gray-500 hover:text-gold hover:pl-2 transition-all block">{t('gift_sets')}</Link></li>
                                             </ul>
                                         </div>
 
@@ -190,13 +232,13 @@ const Navbar = () => {
                                             <div className="relative group cursor-pointer overflow-hidden rounded-md">
                                                 <img src="https://placehold.co/400x300/D4AF37/FFFFFF?text=Royal+Sidr+Honey" alt="Featured 1" className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-105" />
                                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                                                    <span className="text-white font-serif font-bold text-lg tracking-wider">Royal Honey</span>
+                                                    <span className="text-white font-serif font-bold text-lg tracking-wider">{t('royal_honey')}</span>
                                                 </div>
                                             </div>
                                             <div className="relative group cursor-pointer overflow-hidden rounded-md">
                                                 <img src="https://placehold.co/400x300/4B3621/FFFFFF?text=Premium+Coffee" alt="Featured 2" className="w-full h-40 object-cover transition-transform duration-500 group-hover:scale-105" />
                                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-center justify-center">
-                                                    <span className="text-white font-serif font-bold text-lg tracking-wider">Haraz Coffee</span>
+                                                    <span className="text-white font-serif font-bold text-lg tracking-wider">{t('haraz_coffee')}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -206,13 +248,13 @@ const Navbar = () => {
                             )}
                         </li>
 
-                        <li><Link to="/products?category=honey" className="text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4">Honey</Link></li>
-                        <li><Link to="/products?category=coffee" className="text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4">Coffee</Link></li>
-                        <li><Link to="/products?category=gifts" className="text-xs font-bold uppercase tracking-[0.15em] text-gold hover:text-gold/80 transition-colors py-4">Gifts</Link></li>
+                        <li><Link to="/products?category=honey" className={`text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4 ${scrolled ? 'text-gray-800' : 'text-white'}`}>{t('honey')}</Link></li>
+                        <li><Link to="/products?category=coffee" className={`text-xs font-bold uppercase tracking-[0.15em] hover:text-gold transition-colors py-4 ${scrolled ? 'text-gray-800' : 'text-white'}`}>{t('coffee')}</Link></li>
+                        <li><Link to="/products?category=gifts" className={`text-xs font-bold uppercase tracking-[0.15em] text-gold hover:text-gold/80 transition-colors py-4 ${scrolled ? 'text-gold' : 'text-white'}`}>{t('gifts')}</Link></li>
                     </ul>
                 </div>
-            </nav>
-        </div>
+            </nav >
+        </div >
     );
 };
 
