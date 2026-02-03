@@ -14,7 +14,7 @@ app.use(express.json());
 
 // Serve Static Frontend Files
 const path = require('path');
-app.use(express.static(path.join(__dirname, '../frontend/dist')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -290,7 +290,7 @@ app.post('/api/orders', async (req, res) => {
 
 // Handle SPA (Serve index.html for any unknown routes)
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
 loadConfig().then(() => {
