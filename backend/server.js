@@ -14,16 +14,56 @@ app.use(cors());
 app.use(express.json());
 
 // --- API CONNECTIVITY TEST ---
-app.get('/api/test', (req, res) => {
+app.get('/api/test', async (req, res) => {
+    let stripeStatus = 'not_configured';
+    let stripeDetails = null;
+
+    if (config.stripe_secret_key) {
+        try {
+            const stripe = require('stripe')(config.stripe_secret_key);
+            const account = await stripe.accounts.retrieve();
+            stripeStatus = 'connected';
+            stripeDetails = {
+                id: account.id,
+                business_name: account.settings?.dashboard?.display_name
+            };
+        } catch (e) {
+            stripeStatus = 'error';
+            stripeDetails = { error: e.message };
+        }
+    }
+
     res.json({
         status: 'success',
         message: 'Backend is connected and running!',
         timestamp: new Date().toISOString(),
         env_check: {
-            stripe_enabled: !!process.env.STRIPE_SECRET_KEY,
-            smtp_host: process.env.SMTP_HOST || 'using_db_config'
-        }
+            stripe_status: stripeStatus,
+            stripe_details: stripeDetails,
+            smtp_host: process.env.SMTP_HOST || config.smtp_host || 'using_db_config'
+        },
+        database: 'connected' // If we reached here, Prisma is working
     });
+});
+
+// --- STORE CONFIGURATION ENDPOINT ---
+app.get('/api/config', async (req, res) => {
+    try {
+        // Return configuration populated by loadConfig() with fallback to env
+        res.json({
+            site_name: config.site_name || process.env.SITE_NAME || 'Yemeni Market',
+            site_logo: config.site_logo || process.env.SITE_LOGO || '',
+            stripe_public_key: config.stripe_public_key || process.env.STRIPE_PUBLIC_KEY || '',
+            // Add other public config as needed
+        });
+    } catch (error) {
+        console.error('Error fetching store config:', error);
+        res.json({
+            site_name: 'Yemeni Market',
+            site_logo: '',
+            stripe_public_key: process.env.STRIPE_PUBLIC_KEY || '',
+        });
+    }
 });
 
 // Routes will be defined below
@@ -717,23 +757,6 @@ app.put('/api/admin/orders/:id/status', checkAdmin, async (req, res) => {
         res.status(500).json({ error: "Failed to update order status" });
     }
 });
-// --- PUBLIC CONFIG ROUTE ---
-app.get('/api/config', async (req, res) => {
-    try {
-        // Only return configs marked as public in the database
-        const publicConfigs = await prisma.store_config.findMany({
-            where: { isPublic: true }
-        });
-
-        const configMap = {};
-        publicConfigs.forEach(c => configMap[c.key] = c.value);
-
-        res.json(configMap);
-    } catch (error) {
-        console.error("Failed to fetch public config:", error);
-        res.status(500).json({ error: 'Failed to load configuration' });
-    }
-});
 
 // Admin Config Management
 app.get('/api/admin/config', checkAdmin, async (req, res) => {
@@ -1324,35 +1347,30 @@ app.post('/api/newsletter', async (req, res) => {
     }
 });
 
-// Serve Static Frontend Files
-// Production: serve from 'public' folder inside backend
-// Development: serve from '../dist' if available
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, '../dist')));
+// API-only mode - No frontend serving
+// Frontend is hosted separately on yemenimarket.fr
+// This backend serves API endpoints only
 
-// Handle SPA Client-side routing (Must be last route)
-app.get('*', (req, res) => {
-    // Avoid intercepting API routes
-    if (req.path.startsWith('/api/')) {
-        return res.status(404).json({ error: 'API route not found' });
-    }
+// Catch-all for undefined API routes
+// app.use('/api/:path*', (req, res) => {
+//     res.status(404).json({ error: 'API endpoint not found' });
+// });
 
-    const prodIndex = path.resolve(__dirname, 'public', 'index.html');
-    const devIndex = path.resolve(__dirname, '..', 'dist', 'index.html');
-    const rootIndex = path.resolve(__dirname, 'index.html'); // Backup if server.js moved to root
-
-    console.log(`[SPA Routing] Request for: ${req.path}`);
-
-    if (require('fs').existsSync(prodIndex)) {
-        res.sendFile(prodIndex);
-    } else if (require('fs').existsSync(devIndex)) {
-        res.sendFile(devIndex);
-    } else if (require('fs').existsSync(rootIndex)) {
-        res.sendFile(rootIndex);
-    } else {
-        console.error(`[SPA Error] No index.html found at: ${prodIndex} or ${devIndex}`);
-        res.status(404).send("Frontend build not found. Please ensure 'dist' exists at the root or 'public' in backend.");
-    }
+// Root endpoint for health check
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Yemeni Market API',
+        status: 'running',
+        version: '1.0.0',
+        endpoints: {
+            test: '/api/test',
+            config: '/api/config',
+            products: '/api/products',
+            auth: '/api/auth/*',
+            orders: '/api/orders',
+            checkout: '/api/create-payment-intent'
+        }
+    });
 });
 
 loadConfig().then(() => {

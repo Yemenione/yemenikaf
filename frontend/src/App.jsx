@@ -28,6 +28,7 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const Terms = lazy(() => import('./pages/Terms'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Returns = lazy(() => import('./pages/Returns'));
+const ConnectionCheck = lazy(() => import('./pages/ConnectionCheck'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Pages Lazy Load
@@ -81,6 +82,7 @@ function App() {
                   <Route path="/register" element={<Register />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/connection-check" element={<ConnectionCheck />} />
                   <Route path="/profile" element={
                     <ProtectedRoute>
                       <Profile />
