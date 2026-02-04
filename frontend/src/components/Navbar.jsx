@@ -12,11 +12,12 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from './ui/sheet';
+import CartDrawer from './Cart/CartDrawer';
 
 const Navbar = () => {
     const { t, i18n } = useTranslation();
     const navigate = useNavigate();
-    const { cartItems } = useCart();
+    const { cartItems, setIsCartOpen } = useCart();
     const { wishlist } = useWishlist();
     const config = useStoreConfig(); // Get dynamic config
     const { user } = useAuth();
@@ -50,7 +51,7 @@ const Navbar = () => {
     ];
 
     return (
-        <div className={`fixed top-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
+        <div className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? 'glass' : 'bg-transparent'}`}>
             {/* 1. Utility Bar (Hidden on scroll for cleaner look, or adapt colors) */}
             <div className={`py-1 px-6 text-[10px] tracking-wider transition-colors duration-300 ${scrolled ? 'bg-coffee-dark text-white' : 'bg-black/80 text-white backdrop-blur-sm'}`}>
                 <div className="container mx-auto flex justify-between items-center">
@@ -155,16 +156,14 @@ const Navbar = () => {
 
                         {/* Cart Icon */}
                         <div className="relative">
-                            <Link to="/cart">
-                                <Button variant="ghost" size="icon" className={`hover:text-gold transition ${scrolled ? 'text-black' : 'text-white'}`}>
-                                    <ShoppingBag className="w-5 h-5" />
-                                    {cartItems && cartItems.length > 0 && (
-                                        <Badge className="absolute -top-1 -right-1 bg-gold hover:bg-gold/90 text-coffee-dark h-5 w-5 flex items-center justify-center rounded-full text-[10px]">
-                                            {cartItems.reduce((acc, item) => acc + item.quantity, 0)}
-                                        </Badge>
-                                    )}
-                                </Button>
-                            </Link>
+                            <button onClick={() => setIsCartOpen(true)} className={`hover:text-gold transition flex items-center justify-center p-2 rounded-md ${scrolled ? 'text-black' : 'text-white'}`}>
+                                <ShoppingBag className="w-5 h-5" />
+                                {cartItems && cartItems.length > 0 && (
+                                    <Badge className="absolute -top-1 -right-1 bg-gold hover:bg-gold/90 text-coffee-dark h-5 w-5 flex items-center justify-center rounded-full text-[10px]">
+                                        {cartItems.reduce((acc, item) => acc + item.quantity, 0)}
+                                    </Badge>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -246,6 +245,7 @@ const Navbar = () => {
                     </ul>
                 </div>
             </nav >
+            <CartDrawer />
         </div >
     );
 };

@@ -6,34 +6,30 @@
   :root {
     /* 
       Premium Yemeni Color Palette:
-      - Gold: #D4AF37 (Elegance, Heritage)
+      - Gold: #C5A059 (Elegance, Heritage)
       - Coffee Dark: #2C1E14 (Depth, Earthy)
       - Sand: #F9F7F5 (Neutral, Soft)
       - White: #FFFFFF
     */
-    --background: 40 30% 98%;
-    /* Soft Sand */
-    --foreground: 25 35% 12%;
-    /* Coffee Deep */
+    --background: 40 30% 98%; /* Soft Sand #F9F7F5 */
+    --foreground: 25 35% 12%; /* Coffee Dark #2C1E14 */
 
     --card: 0 0% 100%;
-    --card-foreground: 25 35% 12%;
+    --card-foreground: 25 35% 12%; 
 
     --popover: 0 0% 100%;
     --popover-foreground: 25 35% 12%;
 
-    --primary: 46 65% 52%;
-    /* Signature Gold */
+    --primary: 25 35% 12%; /* Coffee for primary actions to be readable */
     --primary-foreground: 40 30% 98%;
 
-    --secondary: 25 35% 15%;
-    /* Coffee Dark */
-    --secondary-foreground: 40 30% 98%;
+    --secondary: 40 30% 96%; /* Slightly darker sand */
+    --secondary-foreground: 25 35% 12%;
 
     --muted: 40 20% 94%;
     --muted-foreground: 25 20% 40%;
 
-    --accent: 46 65% 52%;
+    --accent: 46 65% 52%; /* Gold #C5A059 */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;

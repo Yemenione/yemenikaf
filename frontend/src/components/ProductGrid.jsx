@@ -5,7 +5,7 @@ import Navbar from './Navbar';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
-import { ProductCardSkeleton } from './ui/skeleton';
+import ProductCardSkeleton from './ui/ProductCardSkeleton';
 import {
     Sheet,
     SheetContent,
@@ -13,6 +13,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "./ui/sheet"
+import ScrollReveal from './UI/ScrollReveal';
 
 const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
     const { t } = useTranslation();
@@ -107,6 +108,7 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
     const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
     const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
     const [sort, setSort] = useState(searchParams.get('sort') || 'name_asc');
+    const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
 
     // Initialize state from URL 
     useEffect(() => {
@@ -116,6 +118,7 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
         setMinPrice(searchParams.get('min_price') || '');
         setMaxPrice(searchParams.get('max_price') || '');
         setSort(searchParams.get('sort') || 'name_asc');
+        setSearchQuery(searchParams.get('search') || '');
     }, [searchParams]);
 
     useEffect(() => {
@@ -133,6 +136,7 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
                 if (minPrice) queryParts.push(`min_price=${minPrice}`);
                 if (maxPrice) queryParts.push(`max_price=${maxPrice}`);
                 if (sort) queryParts.push(`sort=${sort}`);
+                if (searchQuery) queryParts.push(`search=${encodeURIComponent(searchQuery)}`);
 
                 if (queryParts.length > 0) API_URL += `?${queryParts.join('&')}`;
 
@@ -156,7 +160,7 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
         // Debounce fetching slightly or just run on dependency change
         const timeoutId = setTimeout(fetchProducts, 300);
         return () => clearTimeout(timeoutId);
-    }, [searchParams, selectedCategory, minPrice, maxPrice, sort, limit]);
+    }, [searchParams, selectedCategory, minPrice, maxPrice, sort, limit, searchQuery]);
 
     // Update URL helper
     const updateFilter = (key, value) => {
@@ -174,7 +178,8 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
     const categories = ['All', 'Honey', 'Coffee', 'Spices', 'Gifts'];
 
     let filteredProducts = products.filter(p =>
-        (selectedCategory === 'All' || p.category === selectedCategory)
+        (selectedCategory === 'All' || p.category === selectedCategory) &&
+        (!searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) || (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())))
     );
 
     if (limit) {
@@ -270,15 +275,51 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
                                     <div className="mt-8 space-y-8">
                                         <div>
                                             <h4 className="font-medium mb-4 text-gold">{t('categories')}</h4>
-                                            <ul className="space-y-3">
+                                            <div className="flex flex-wrap gap-2">
                                                 {categories.map(cat => (
-                                                    <li key={cat}>
-                                                        <button onClick={() => setSelectedCategory(cat)} className={`${selectedCategory === cat ? 'font-bold text-coffee-dark' : 'text-gray-500'}`}>
-                                                            {cat === 'All' ? t('view_all') : t(cat.toLowerCase())}
-                                                        </button>
-                                                    </li>
+                                                    <button
+                                                        key={cat}
+                                                        onClick={() => setSelectedCategory(cat)}
+                                                        className={`px-3 py-1 text-sm border rounded-full transition-colors ${selectedCategory === cat ? 'bg-coffee-dark text-white border-coffee-dark' : 'bg-white text-gray-500 border-gray-200'}`}
+                                                    >
+                                                        {cat === 'All' ? t('view_all') : t(cat.toLowerCase())}
+                                                    </button>
                                                 ))}
-                                            </ul>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h4 className="font-medium mb-4 text-gold">{t('price_range')}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    placeholder="Min"
+                                                    value={minPrice}
+                                                    onChange={(e) => setMinPrice(e.target.value)}
+                                                    className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
+                                                />
+                                                <span className="text-gray-400">-</span>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Max"
+                                                    value={maxPrice}
+                                                    onChange={(e) => setMaxPrice(e.target.value)}
+                                                    className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <h4 className="font-medium mb-4 text-gold">{t('sort_by')}</h4>
+                                            <select
+                                                value={sort}
+                                                onChange={(e) => setSort(e.target.value)}
+                                                className="w-full border border-gray-200 rounded px-3 py-2 text-sm bg-white"
+                                            >
+                                                <option value="newest">{t('newest_arrivals')}</option>
+                                                <option value="price_asc">{t('price_low_to_high')}</option>
+                                                <option value="price_desc">{t('price_high_to_low')}</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </SheetContent>
@@ -304,8 +345,10 @@ const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
                 )}
 
                 <div className={`grid grid-cols-2 ${isPage ? 'lg:grid-cols-3' : 'lg:grid-cols-4'} gap-x-6 gap-y-12`}>
-                    {filteredProducts.map(product => (
-                        <ProductCard key={product.id} product={product} />
+                    {filteredProducts.map((product, index) => (
+                        <ScrollReveal key={product.id} delay={index * 0.05} width="100%">
+                            <ProductCard product={product} />
+                        </ScrollReveal>
                     ))}
                 </div>
 
