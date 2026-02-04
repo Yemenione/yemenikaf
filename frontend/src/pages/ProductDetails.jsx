@@ -10,7 +10,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 
 // Premium UI & SEO Components
-import PageTransition from '../components/UI/PageTransition';
+import PageTransition from '../components/ui/PageTransition';
 import ProductStory from '../components/Product/ProductStory';
 import TrustBadges from '../components/Product/TrustBadges';
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";

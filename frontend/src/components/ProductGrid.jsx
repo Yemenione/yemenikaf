@@ -13,7 +13,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "./ui/sheet"
-import ScrollReveal from './UI/ScrollReveal';
+import ScrollReveal from './ui/ScrollReveal';
 
 const ProductGrid = ({ isPage = true, limit = null, category = null }) => {
     const { t } = useTranslation();

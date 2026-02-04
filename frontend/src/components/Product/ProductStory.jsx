@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import ScrollReveal from '../UI/ScrollReveal';
+import ScrollReveal from '../ui/ScrollReveal';
 
 const ProductStory = ({ story, origin, artisan }) => {
     if (!story && !origin) return null;

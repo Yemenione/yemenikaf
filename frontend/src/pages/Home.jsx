@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import HeroCarousel from '../components/HeroCarousel'; // Import Carousel
 import Newsletter from '../components/Newsletter';
-import ScrollReveal from '../components/UI/ScrollReveal';
+import ScrollReveal from '../components/ui/ScrollReveal';
 
 const Home = () => {
     const { t } = useTranslation();
