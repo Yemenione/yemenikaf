@@ -12,6 +12,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// --- API CONNECTIVITY TEST ---
+app.get('/api/test', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'Backend is connected and running!',
+        timestamp: new Date().toISOString(),
+        env_check: {
+            stripe_enabled: !!process.env.STRIPE_SECRET_KEY,
+            smtp_host: process.env.SMTP_HOST || 'using_db_config'
+        }
+    });
+});
+
 // Serve Static Frontend Files
 const path = require('path');
 // Production: serve from 'public' folder inside backend
@@ -194,7 +207,18 @@ const loadConfig = async () => {
         configs.forEach(c => {
             config[c.key] = c.value; // key is primary key in store_config
         });
-        console.log("Configuration loaded from DB (store_config)");
+
+        // OVERRIDE with Environment Variables (Priority: Env > DB)
+        if (process.env.SMTP_HOST) config.smtp_host = process.env.SMTP_HOST;
+        if (process.env.SMTP_PORT) config.smtp_port = process.env.SMTP_PORT;
+        if (process.env.SMTP_USER) config.smtp_user = process.env.SMTP_USER;
+        if (process.env.SMTP_PASS) config.smtp_pass = process.env.SMTP_PASS;
+        if (process.env.SMTP_SECURE) config.smtp_secure = process.env.SMTP_SECURE;
+
+        if (process.env.STRIPE_SECRET_KEY) config.stripe_secret_key = process.env.STRIPE_SECRET_KEY;
+        if (process.env.STRIPE_PUBLIC_KEY) config.stripe_public_key = process.env.STRIPE_PUBLIC_KEY;
+
+        console.log("Configuration loaded from DB & Env");
     } catch (e) {
         console.error("Failed to load config from DB", e);
     }
@@ -1307,7 +1331,7 @@ app.post('/api/newsletter', async (req, res) => {
 });
 
 // Handle SPA Client-side routing (Must be last route)
-app.get('*', (req, res) => {
+app.get(/(.*)/, (req, res) => {
     // Check 'public' first, then dev path
     const prodIndex = path.join(__dirname, 'public', 'index.html');
     if (require('fs').existsSync(prodIndex)) {
