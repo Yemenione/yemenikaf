@@ -26,15 +26,7 @@ app.get('/api/test', (req, res) => {
     });
 });
 
-// Serve Static Frontend Files
-const path = require('path');
-// Production: serve from 'public' folder inside backend
-// Development: serve from '../frontend/dist' if available
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(path.join(__dirname, '../dist')));
-
-// SPA Catch-all route (Must be after API routes)
-// We'll place this at the end of the file, before app.listen
+// Routes will be defined below
 
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
@@ -1331,6 +1323,12 @@ app.post('/api/newsletter', async (req, res) => {
         res.status(500).json({ error: "Failed to subscribe" });
     }
 });
+
+// Serve Static Frontend Files
+// Production: serve from 'public' folder inside backend
+// Development: serve from '../dist' if available
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // Handle SPA Client-side routing (Must be last route)
 app.get(/(.*)/, (req, res) => {
