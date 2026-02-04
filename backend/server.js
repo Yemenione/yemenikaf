@@ -1331,18 +1331,21 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, '../dist')));
 
 // Handle SPA Client-side routing (Must be last route)
-app.get(/(.*)/, (req, res) => {
-    // Check 'public' first, then dev path
+app.get('*', (req, res) => {
+    // Avoid intercepting API routes that might have slipped through (just in case)
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API route not found' });
+    }
+
     const prodIndex = path.join(__dirname, 'public', 'index.html');
+    const devIndex = path.join(__dirname, '../dist', 'index.html');
+
     if (require('fs').existsSync(prodIndex)) {
         res.sendFile(prodIndex);
+    } else if (require('fs').existsSync(devIndex)) {
+        res.sendFile(devIndex);
     } else {
-        const devIndex = path.join(__dirname, '../dist', 'index.html');
-        if (require('fs').existsSync(devIndex)) {
-            res.sendFile(devIndex);
-        } else {
-            res.status(404).send("Frontend not built. Run 'npm run build' in frontend directory.");
-        }
+        res.status(404).send("Frontend build not found. Please ensure the 'dist' folder exists at the root or 'public' folder exists in backend.");
     }
 });
 

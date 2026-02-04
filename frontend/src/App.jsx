@@ -28,6 +28,7 @@ const Checkout = lazy(() => import('./pages/Checkout'));
 const Terms = lazy(() => import('./pages/Terms'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const Returns = lazy(() => import('./pages/Returns'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Admin Pages Lazy Load
 const AdminLayout = lazy(() => import('./layout/AdminLayout'));
@@ -105,6 +106,9 @@ function App() {
                     <Route path="customers" element={<AdminCustomers />} />
                     <Route path="settings" element={<Settings />} />
                   </Route>
+
+                  {/* Catch-all 404 Route */}
+                  <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </CartProvider>

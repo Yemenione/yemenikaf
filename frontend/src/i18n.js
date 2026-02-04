@@ -278,7 +278,10 @@ const resources = {
             "discount_label": "Discount ({{code}})",
             "coupon_placeholder": "Gift Card or Coupon Code",
             "remove_coupon": "Remove Coupon",
-            "reviews_count": "Reviews"
+            "reviews_count": "Reviews",
+            "not_found_title": "Hidden Pathway",
+            "not_found_text": "The treasure you seek seems to have drifted on the winds of the desert. Let us guide you back to our main collection.",
+            "return_home": "Return Home"
         }
     },
     fr: {
@@ -557,7 +560,10 @@ const resources = {
             "discount_label": "Remise ({{code}})",
             "coupon_placeholder": "Carte cadeau ou code promo",
             "remove_coupon": "Supprimer le coupon",
-            "reviews_count": "Avis"
+            "reviews_count": "Avis",
+            "not_found_title": "Sentier Introuvable",
+            "not_found_text": "Le trésor que vous cherchez semble s'être envolé avec les vents du désert. Laissez-nous vous guider vers notre collection principale.",
+            "return_home": "Retour à l'Accueil"
         }
     },
     ar: {
@@ -797,6 +803,9 @@ const resources = {
             "forgot_password_error": "حدث خطأ. يرجى المحاولة مرة أخرى.",
             "fill_all_fields": "يرجى ملء جميع الحقول",
             "product_not_found": "المنتج غير موجود",
+            "not_found_title": "صفحة غير موجودة",
+            "not_found_text": "يبدو أن الكنوز التي تبحث عنها قد اختفت مع رياح الصحراء. دعنا نرشدك للعودة إلى مجموعتنا الرئيسية.",
+            "return_home": "العودة للرئيسية",
             "our_collections": "مجموعاتنا",
             "collections_desc": "اكتشف النكهات الأصيلة والكنوز اليمنية، المنسقة للذواقة المعاصرين.",
             "load_more": "تحميل المزيد من المنتجات",
